@@ -17,9 +17,9 @@
     }
   </style>
 </head>
-<body class="bg-gradient-to-r from-blue-100 to-purple-100 p-6">
+<body class="bg-gradient-to-r from-indigo-100 to-pink-100 p-6">
   <div class="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-2xl">
-    <h1 class="text-3xl font-bold mb-6 text-center text-indigo-700">六獸個性預測</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center text-purple-700">六獸個性預測</h1>
 
     <!-- 分析模式 -->
     <div class="mb-4">
@@ -78,17 +78,21 @@
 
     <!-- 按鈕 -->
     <div class="flex gap-4 mb-4">
-      <button onclick="startAnalysis(false)" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
+      <button onclick="startAnalysis(false)" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
         單次分析
       </button>
-      <button onclick="startAnalysis(true)" class="bg-pink-600 text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
+      <button onclick="startAnalysis(true)" class="bg-gradient-to-r from-yellow-400 to-red-500 text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
         批次分析（職場+愛情+性愛）
       </button>
     </div>
 
     <!-- 進度條 -->
     <div id="progress" class="w-full bg-gray-200 rounded mt-4 hidden">
-      <div id="progress-bar" class="bg-indigo-600 text-xs leading-none py-1 text-center text-white rounded w-0">0%</div>
+      <div id="progress-bar" 
+           class="text-xs leading-none py-1 text-center text-white rounded w-0"
+           style="background: linear-gradient(to right, #f472b6, #facc15);">
+        0%
+      </div>
     </div>
 
     <!-- 結果 -->
@@ -99,10 +103,10 @@
 
       <!-- 列印與下載 -->
       <div class="mt-4 flex gap-4">
-        <button onclick="printResult()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 no-print">
+        <button onclick="printResult()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-700 no-print">
           列印分析結果
         </button>
-        <button onclick="downloadPDF()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 no-print">
+        <button onclick="downloadPDF()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 no-print">
           下載彩色 PDF
         </button>
       </div>
@@ -121,6 +125,14 @@ async function startAnalysis(multi = false) {
   document.getElementById("progress").classList.remove("hidden");
   updateProgress(0);
 
+  let progress = 0;
+  const interval = setInterval(() => {
+    if (progress < 95) {
+      progress += 5;
+      updateProgress(progress);
+    }
+  }, 200);
+
   const mode = document.getElementById("mode").value;
   const aBeast = document.getElementById("aBeast").value;
   const aKin = document.getElementById("aKin").value;
@@ -137,33 +149,32 @@ async function startAnalysis(multi = false) {
   });
   const data = await response.json();
 
+  clearInterval(interval);
   updateProgress(100);
+
   document.getElementById("result").classList.remove("hidden");
 
-  if (multi) {
+  if (multi && data.results) {
     multiResults = data.results;
     const container = document.getElementById("result-text");
     container.innerHTML = "";
     multiResults.forEach((r, i) => {
-      container.innerHTML += `<h3 class="text-lg font-bold text-indigo-600 mt-4">${r.context} 分析</h3><p>${r.text.replace(/\n/g,"<br>")}</p>`;
+      container.innerHTML += `<h3 class="text-lg font-bold text-purple-600 mt-4">${r.context} 分析</h3><p>${r.text.replace(/\n/g,"<br>")}</p>`;
     });
-
-    // 預設顯示第一個雷達圖
     drawRadar(multiResults[0].scores);
 
-    // 建立切換按鈕
     const switchDiv = document.getElementById("radar-switch");
     switchDiv.innerHTML = "<p class='font-semibold mb-2'>切換雷達圖：</p>";
     multiResults.forEach((r, i) => {
       const btn = document.createElement("button");
       btn.innerText = r.context;
-      btn.className = "px-3 py-1 bg-blue-500 text-white rounded mr-2 hover:bg-blue-700";
+      btn.className = "px-3 py-1 bg-gradient-to-r from-green-400 to-blue-500 text-white rounded mr-2 hover:opacity-90";
       btn.onclick = () => drawRadar(r.scores);
       switchDiv.appendChild(btn);
     });
     switchDiv.classList.remove("hidden");
 
-  } else {
+  } else if (data.text) {
     document.getElementById("result-text").innerHTML = data.text.replace(/\n/g,"<br>");
     drawRadar(data.scores);
     document.getElementById("radar-switch").classList.add("hidden");
@@ -176,6 +187,7 @@ function updateProgress(value) {
   bar.innerText = value + "%";
 }
 
+// 雷達圖（含動畫效果）
 function drawRadar(scores) {
   const ctx = document.getElementById("radarChart").getContext("2d");
   if (chartInstance) chartInstance.destroy();
@@ -189,12 +201,20 @@ function drawRadar(scores) {
         label: "能量分布",
         data: values,
         fill: true,
-        borderColor: "rgba(99,102,241,1)",
-        backgroundColor: "rgba(99,102,241,0.2)",
-        pointBackgroundColor: "rgba(236,72,153,1)"
+        borderColor: "#ec4899",
+        backgroundColor: "rgba(244, 114, 182, 0.3)",
+        pointBackgroundColor: "#facc15",
+        pointBorderColor: "#f472b6"
       }]
     },
-    options: { responsive: true, scales: { r: { beginAtZero: true, max: 10 } } }
+    options: {
+      responsive: true,
+      animation: {
+        duration: 2000,
+        easing: 'easeOutElastic'
+      },
+      scales: { r: { beginAtZero: true, max: 10 } }
+    }
   });
 }
 
