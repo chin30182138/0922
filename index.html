@@ -23,18 +23,18 @@
     <!-- 單人輸入 -->
     <div id="singleMode" class="bg-white shadow rounded p-4 mb-6">
       <h2 class="font-bold mb-2 text-blue-600">單人分析</h2>
-      <label class="block mb-1">六獸</label>
-      <select id="singleBeast" class="w-full border p-2 rounded mb-2">
+      <label class="block mb-1 text-lg font-extrabold text-indigo-700">六獸</label>
+      <select id="singleBeast" class="w-full border p-2 rounded shadow bg-blue-50 mb-3">
         <option>青龍</option><option>朱雀</option><option>勾陳</option>
         <option>螣蛇</option><option>白虎</option><option>玄武</option>
       </select>
-      <label class="block mb-1">六親</label>
-      <select id="singleKin" class="w-full border p-2 rounded mb-2">
+      <label class="block mb-1 text-lg font-extrabold text-indigo-700">六親</label>
+      <select id="singleKin" class="w-full border p-2 rounded shadow bg-purple-50 mb-3">
         <option>父母</option><option>兄弟</option><option>子孫</option>
         <option>妻財</option><option>官鬼</option>
       </select>
-      <label class="block mb-1">地支</label>
-      <select id="singleBranch" class="w-full border p-2 rounded">
+      <label class="block mb-1 text-lg font-extrabold text-indigo-700">地支</label>
+      <select id="singleBranch" class="w-full border p-2 rounded shadow bg-pink-50">
         <option>子</option><option>丑</option><option>寅</option><option>卯</option>
         <option>辰</option><option>巳</option><option>午</option><option>未</option>
         <option>申</option><option>酉</option><option>戌</option><option>亥</option>
@@ -46,41 +46,59 @@
       <h2 class="font-bold mb-2 text-pink-600">雙人分析</h2>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block mb-1">甲方六獸</label>
-          <select id="aBeast" class="w-full border p-2 rounded mb-2">
+          <label class="block mb-1 text-lg font-extrabold text-indigo-700">甲方六獸</label>
+          <select id="aBeast" class="w-full border p-2 rounded shadow bg-blue-50 mb-3">
             <option>青龍</option><option>朱雀</option><option>勾陳</option>
             <option>螣蛇</option><option>白虎</option><option>玄武</option>
           </select>
-          <label class="block mb-1">甲方六親</label>
-          <select id="aKin" class="w-full border p-2 rounded mb-2">
+          <label class="block mb-1 text-lg font-extrabold text-indigo-700">甲方六親</label>
+          <select id="aKin" class="w-full border p-2 rounded shadow bg-purple-50 mb-3">
             <option>父母</option><option>兄弟</option><option>子孫</option>
             <option>妻財</option><option>官鬼</option>
           </select>
-          <label class="block mb-1">甲方地支</label>
-          <select id="aBranch" class="w-full border p-2 rounded">
+          <label class="block mb-1 text-lg font-extrabold text-indigo-700">甲方地支</label>
+          <select id="aBranch" class="w-full border p-2 rounded shadow bg-pink-50">
             <option>子</option><option>丑</option><option>寅</option><option>卯</option>
             <option>辰</option><option>巳</option><option>午</option><option>未</option>
             <option>申</option><option>酉</option><option>戌</option><option>亥</option>
           </select>
         </div>
         <div>
-          <label class="block mb-1">乙方六獸</label>
-          <select id="bBeast" class="w-full border p-2 rounded mb-2">
+          <label class="block mb-1 text-lg font-extrabold text-indigo-700">乙方六獸</label>
+          <select id="bBeast" class="w-full border p-2 rounded shadow bg-blue-50 mb-3">
             <option>青龍</option><option>朱雀</option><option>勾陳</option>
             <option>螣蛇</option><option>白虎</option><option>玄武</option>
           </select>
-          <label class="block mb-1">乙方六親</label>
-          <select id="bKin" class="w-full border p-2 rounded mb-2">
+          <label class="block mb-1 text-lg font-extrabold text-indigo-700">乙方六親</label>
+          <select id="bKin" class="w-full border p-2 rounded shadow bg-purple-50 mb-3">
             <option>父母</option><option>兄弟</option><option>子孫</option>
             <option>妻財</option><option>官鬼</option>
           </select>
-          <label class="block mb-1">乙方地支</label>
-          <select id="bBranch" class="w-full border p-2 rounded">
+          <label class="block mb-1 text-lg font-extrabold text-indigo-700">乙方地支</label>
+          <select id="bBranch" class="w-full border p-2 rounded shadow bg-pink-50">
             <option>子</option><option>丑</option><option>寅</option><option>卯</option>
             <option>辰</option><option>巳</option><option>午</option><option>未</option>
             <option>申</option><option>酉</option><option>戌</option><option>亥</option>
           </select>
         </div>
+      </div>
+    </div>
+
+    <!-- 顏色控制 -->
+    <div class="flex gap-6 mb-6 flex-wrap">
+      <div>
+        <label class="block text-sm font-bold text-gray-700">雷達圖顏色</label>
+        <select id="colorSelect" class="mt-1 p-2 border rounded bg-yellow-50">
+          <option value="rgba(255,99,132,0.5)">紅色</option>
+          <option value="rgba(54,162,235,0.5)">藍色</option>
+          <option value="rgba(75,192,192,0.5)">綠色</option>
+          <option value="rgba(255,206,86,0.5)">黃色</option>
+          <option value="rgba(153,102,255,0.5)">紫色</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-gray-700">背景顏色</label>
+        <input type="color" id="bgPicker" value="#fff0f5" class="mt-1 h-10 w-20 border rounded">
       </div>
     </div>
 
@@ -90,6 +108,11 @@
       <button onclick="analyze('愛情')" class="px-4 py-2 bg-pink-500 text-white rounded">愛情分析</button>
       <button onclick="analyze('性愛')" class="px-4 py-2 bg-red-500 text-white rounded">性愛分析</button>
       <button onclick="analyze('個性')" class="px-4 py-2 bg-purple-600 text-white rounded">個性分析</button>
+    </div>
+
+    <!-- 進度條 -->
+    <div class="w-full bg-gray-200 rounded-full h-5 mb-4">
+      <div id="progressBar" class="h-5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-xs text-white text-center leading-5">0%</div>
     </div>
 
     <!-- 分析結果 -->
@@ -109,7 +132,6 @@
 
   <script>
     let currentMode = "single";
-
     function switchMode(mode) {
       currentMode = mode;
       document.getElementById("singleMode").classList.toggle("hidden", mode !== "single");
@@ -139,7 +161,33 @@
       }
     });
 
+    // 改雷達圖顏色
+    document.getElementById("colorSelect").addEventListener("change", (e) => {
+      const color = e.target.value;
+      radarChart.data.datasets[0].backgroundColor = color;
+      radarChart.data.datasets[0].borderColor = color.replace("0.5", "1");
+      radarChart.update();
+    });
+
+    // 改背景顏色
+    document.getElementById("bgPicker").addEventListener("input", (e) => {
+      document.body.style.background = e.target.value;
+    });
+
+    // 分析
     async function analyze(type) {
+      const progress = document.getElementById("progressBar");
+      let percent = 0;
+      progress.style.width = "0%";
+      progress.textContent = "0%";
+      const interval = setInterval(() => {
+        if (percent < 90) {
+          percent++;
+          progress.style.width = percent + "%";
+          progress.textContent = percent + "%";
+        }
+      }, 30);
+
       document.getElementById("analysisResult").innerHTML = `<p class="text-gray-500">分析中...請稍候</p>`;
       const body = { context: type, mode: currentMode };
 
@@ -163,6 +211,10 @@
       });
       const data = await response.json();
 
+      clearInterval(interval);
+      progress.style.width = "100%";
+      progress.textContent = "100%";
+
       document.getElementById("analysisResult").innerHTML = data.text;
       radarChart.data.datasets[0].data = [
         data.scores["情感"],
@@ -174,16 +226,20 @@
       radarChart.update();
     }
 
+    // 下載 PDF
     async function downloadPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF("p", "mm", "a4");
+
       const analysis = document.getElementById("analysisResult");
-      const text = analysis.innerText;
-      const lines = doc.splitTextToSize(text, 180);
-      doc.text(lines, 15, 20);
-      const canvas = document.getElementById("radarChart");
-      const imgData = canvas.toDataURL("image/png", 1.0);
-      doc.addImage(imgData, "PNG", 15, 120, 180, 120);
+      const canvas1 = await html2canvas(analysis);
+      const imgData1 = canvas1.toDataURL("image/png");
+      doc.addImage(imgData1, "PNG", 10, 10, 190, 0);
+
+      const canvas2 = document.getElementById("radarChart");
+      const imgData2 = canvas2.toDataURL("image/png");
+      doc.addImage(imgData2, "PNG", 10, 150, 180, 120);
+
       doc.save("六獸分析.pdf");
     }
   </script>
