@@ -1,167 +1,102 @@
-// ==========================
-//   檔案：api/analyze.js
-// ==========================
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ error: "missing_env", detail: "OPENAI_API_KEY not set" });
-    }
+    const { context } = req.body ?? {};
 
-    const { mode, aBeast, aKin, aBranch, bBeast, bKin, bBranch, context, multi } = req.body ?? {};
+    // === Prompt 決策 ===
+    let prompt = `你是一位六獸卜卦專家，請針對「${context}」生成完整分析。`;
 
-    // 組合角色資訊
-    let roleInfo = "";
-    if (mode === "single") {
-      roleInfo = `${aBeast} - ${aKin} - ${aBranch}`;
-    } else {
-      roleInfo = `甲方：${aBeast} - ${aKin} - ${aBranch}\n乙方：${bBeast} - ${bKin} - ${bBranch}`;
-    }
-
-    // JSON 剝離函數
-    function parseContent(content) {
-      let scores = { "情感": 5, "事業": 5, "健康": 5, "財運": 5, "智慧": 5 };
-      try {
-        const match = content.match(/\{[\s\S]*\}/);
-        if (match) {
-          scores = JSON.parse(match[0]);
-          content = content.replace(match[0], ""); // 移除 JSON
-        }
-      } catch (e) {
-        console.error("JSON 解析錯誤", e);
-      }
-
-      // Markdown → HTML 簡單轉換
-      content = content
-        .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-purple-600 mt-4">$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-pink-600 mt-6">$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-red-600 mt-6">$1</h1>')
-        .replace(/\*\*(.*?)\*\*/gim, '<strong class="text-indigo-700">$1</strong>')
-        .replace(/\n/g, "<br>");
-
-      return { text: content.trim(), scores };
-    }
-
-    // 根據情境建立 Prompt
-    function buildPrompt(scene) {
-      let prompt = `請根據六獸金錢卦的理論，生成分析內容。
-角色設定：${roleInfo}
-情境：${scene}
-
-請務必用繁體中文，並依照下列結構輸出分析：`;
-
-      if (scene === "職場") {
-        prompt += `
+    if (context === "職場") {
+      prompt += `
+請使用以下結構：
 1. 雙層角色設定（六獸特質、地支特質）
 2. 互動模式分析（上司版/下屬版）
-3. 高危衝突點（三條，重點加粗）
-4. 雙向應對策略（上司版三條，下屬版三條）
-5. 情境對話（模擬上司與下屬互動，2-3句）
+3. 高危衝突點（三條）
+4. 雙向應對策略（各三條）
+5. 情境對話（2~3句）
 6. 經典避坑提醒（三條）
 
-最後請附 JSON：{"情感":x,"事業":x,"健康":x,"財運":x,"智慧":x}`;
-      }
-
-      if (scene === "愛情") {
-        prompt += `
-1. 愛情契合度指數（0-10分）
-2. 情感互動模式
-3. 潛在矛盾點（三條）
-4. 建議相處方式（三條）
-5. 浪漫加分行為（兩條）
-
-最後附 JSON：{"情感":x,"事業":x,"健康":x,"財運":x,"智慧":x}`;
-      }
-
-      if (scene === "性愛") {
-        prompt += `
-請以「文化研究與親密關係教育」角度撰寫，避免露骨詞彙。
+最後附 JSON：{"情感":數字,"事業":數字,"健康":數字,"財運":數字,"智慧":數字}`;
+    } else if (context === "性愛") {
+      prompt += `
+請以「情感研究與兩性互動建議」的角度生成，避免過度露骨。
+請使用以下結構：
 1. 情愛指數（0-10分）
 2. 互動模式
 3. 雷點分析
-4. 最佳親密劇本（兩種）
+4. 最佳性愛劇本（兩種玩法）
 5. 推薦體位（兩種）
 6. 推薦互動技巧（兩種）
-7. 推薦服裝/氛圍（兩種）
+7. 推薦服裝或氛圍營造（兩種）
 8. 推薦輔助道具（兩種）
 9. 推薦場景（兩種）
 
-最後附 JSON：{"情感":x,"事業":x,"健康":x,"財運":x,"智慧":x}`;
-      }
+最後附 JSON：{"情感":數字,"事業":數字,"健康":數字,"財運":數字,"智慧":數字}`;
+    } else if (context === "愛情") {
+      prompt += `
+請使用以下結構：
+1. 情感特質與吸引力來源
+2. 相處模式（優勢與挑戰）
+3. 可能衝突點（三條）
+4. 維繫愛情的方法（三條）
+5. 經典愛情箴言（1~2句）
 
-      if (scene === "人際關係") {
-        prompt += `
-1. 人格互補與衝突點
-2. 合作默契與誤解來源
-3. 溝通建議（三條）
-4. 經典相處場景（一段）
+最後附 JSON：{"情感":數字,"事業":數字,"健康":數字,"財運":數字,"智慧":數字}`;
+    } else {
+      // 預設人際篇
+      prompt += `
+請使用以下結構：
+1. 人際互動特質
+2. 合作優勢
+3. 潛在矛盾（三條）
+4. 化解之道（三條）
+5. 友情或合作箴言（1句）
 
-最後附 JSON：{"情感":x,"事業":x,"健康":x,"財運":x,"智慧":x}`;
-      }
-
-      if (scene === "綜合") {
-        prompt += `
-1. 六獸與地支綜合特質分析
-2. 在職場、人際、愛情三方面的表現（各一段）
-3. 提升運勢的建議（三條）
-
-最後附 JSON：{"情感":x,"事業":x,"健康":x,"財運":x,"智慧":x}`;
-      }
-
-      return prompt;
+最後附 JSON：{"情感":數字,"事業":數字,"健康":數字,"財運":數字,"智慧":數字}`;
     }
 
-    // 多情境
-    if (multi) {
-      const scenes = ["職場", "愛情", "性愛"];
-      const results = [];
-      for (const sc of scenes) {
-        const prompt = buildPrompt(sc);
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [{ role: "user", content: prompt }],
-            temperature: 0.9,
-          }),
-        });
-        const result = await response.json();
-        const content = result.choices?.[0]?.message?.content || "（未生成內容）";
-        const parsed = parseContent(content);
-        results.push({ context: sc, text: parsed.text, scores: parsed.scores });
-      }
-      return res.status(200).json({ results });
-    }
-
-    // 單情境
-    const prompt = buildPrompt(context);
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // === 呼叫 OpenAI ===
+    const completion = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.9,
-      }),
+        messages: [{ role: "user", content: prompt }]
+      })
     });
-    const result = await response.json();
-    const content = result.choices?.[0]?.message?.content || "（未生成內容）";
-    const parsed = parseContent(content);
 
-    return res.status(200).json({ text: parsed.text, scores: parsed.scores });
+    const result = await completion.json();
+    let content = result.choices[0].message.content;
 
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "server_error", detail: err.message });
+    // === JSON 過濾 ===
+    let scores = { "情感": 5, "事業": 5, "健康": 5, "財運": 5, "智慧": 5 };
+    try {
+      const match = content.match(/\{[\s\S]*\}/);
+      if (match) {
+        scores = JSON.parse(match[0]);
+        content = content.replace(match[0], "");
+      }
+    } catch (e) {
+      console.error("JSON parse error", e);
+    }
+
+    // === 清理 Markdown ===
+    content = content.replace(/```json|```/g, ""); // 移除程式區塊
+    content = content.replace(/^#+\s?/gm, ""); // 移除 # 符號
+
+    // Markdown → HTML
+    content = content
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-indigo-700">$1</strong>')
+      .replace(/\n/g, "<br>");
+
+    res.status(200).json({ text: content.trim(), scores });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 }
