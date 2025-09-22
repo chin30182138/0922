@@ -97,6 +97,10 @@
         </select>
       </div>
       <div>
+        <label class="block text-sm font-bold text-gray-700">進度條顏色</label>
+        <input type="color" id="progressPicker" value="#ec4899" class="mt-1 h-10 w-20 border rounded">
+      </div>
+      <div>
         <label class="block text-sm font-bold text-gray-700">背景顏色</label>
         <input type="color" id="bgPicker" value="#fff0f5" class="mt-1 h-10 w-20 border rounded">
       </div>
@@ -132,6 +136,7 @@
 
   <script>
     let currentMode = "single";
+
     function switchMode(mode) {
       currentMode = mode;
       document.getElementById("singleMode").classList.toggle("hidden", mode !== "single");
@@ -151,13 +156,16 @@
           data: [5, 5, 5, 5, 5],
           backgroundColor: "rgba(255,99,132,0.5)",
           borderColor: "rgba(255,99,132,1)",
-          borderWidth: 2
+          borderWidth: 2,
+          pointLabels: { font: { size: 16 } }
         }]
       },
       options: {
         responsive: true,
-        animation: { duration: 1500, easing: "easeOutQuart" },
-        scales: { r: { min: 0, max: 10, ticks: { stepSize: 1 } } }
+        plugins: {
+          legend: { labels: { font: { size: 16 } } }
+        },
+        scales: { r: { min: 0, max: 10, ticks: { stepSize: 1, font: { size: 14 } }, pointLabels: { font: { size: 18 } } } }
       }
     });
 
@@ -172,6 +180,11 @@
     // 改背景顏色
     document.getElementById("bgPicker").addEventListener("input", (e) => {
       document.body.style.background = e.target.value;
+    });
+
+    // 改進度條顏色
+    document.getElementById("progressPicker").addEventListener("input", (e) => {
+      document.getElementById("progressBar").style.background = e.target.value;
     });
 
     // 分析
@@ -215,7 +228,10 @@
       progress.style.width = "100%";
       progress.textContent = "100%";
 
-      document.getElementById("analysisResult").innerHTML = data.text;
+      // 移掉 JSON 字樣
+      let cleanText = data.text.replace(/```json|```/g, "").replace(/JSON輸出|JSON/g, "");
+
+      document.getElementById("analysisResult").innerHTML = cleanText;
       radarChart.data.datasets[0].data = [
         data.scores["情感"],
         data.scores["事業"],
@@ -229,6 +245,9 @@
     // 下載 PDF
     async function downloadPDF() {
       const { jsPDF } = window.jspdf;
+      let filename = prompt("請輸入檔名：", "六獸分析.pdf");
+      if (!filename.endsWith(".pdf")) filename += ".pdf";
+
       const doc = new jsPDF("p", "mm", "a4");
 
       const analysis = document.getElementById("analysisResult");
@@ -240,7 +259,7 @@
       const imgData2 = canvas2.toDataURL("image/png");
       doc.addImage(imgData2, "PNG", 10, 150, 180, 120);
 
-      doc.save("六獸分析.pdf");
+      doc.save(filename);
     }
   </script>
 </body>
