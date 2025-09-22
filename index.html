@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     @media print {
       @page { margin: 14mm; }
@@ -16,11 +17,11 @@
     }
   </style>
 </head>
-<body class="bg-gray-100 p-6">
-  <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold mb-4">六獸個性預測</h1>
+<body class="bg-gradient-to-r from-blue-100 to-purple-100 p-6">
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-2xl">
+    <h1 class="text-3xl font-bold mb-6 text-center text-indigo-700">六獸個性預測</h1>
 
-    <!-- 分析模式選擇 -->
+    <!-- 分析模式 -->
     <div class="mb-4">
       <label class="font-semibold">分析模式：</label>
       <select id="mode" class="border rounded p-2">
@@ -29,18 +30,35 @@
       </select>
     </div>
 
-    <!-- 角色選擇 -->
+    <!-- 單人 -->
     <div id="single-inputs" class="mb-4">
-      <input id="aBeast" placeholder="六獸 (例：青龍)" class="border rounded p-2 mr-2" />
-      <input id="aBranch" placeholder="地支 (例：子)" class="border rounded p-2 mr-2" />
+      <select id="aBeast" class="border rounded p-2 mr-2">
+        <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
+      </select>
+      <select id="aKin" class="border rounded p-2 mr-2">
+        <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
+      </select>
+      <select id="aBranch" class="border rounded p-2 mr-2">
+        <option>子</option><option>丑</option><option>寅</option><option>卯</option><option>辰</option><option>巳</option>
+        <option>午</option><option>未</option><option>申</option><option>酉</option><option>戌</option><option>亥</option>
+      </select>
     </div>
 
+    <!-- 雙人 -->
     <div id="double-inputs" class="mb-4 hidden">
-      <input id="bBeast" placeholder="對方六獸 (例：朱雀)" class="border rounded p-2 mr-2" />
-      <input id="bBranch" placeholder="對方地支 (例：寅)" class="border rounded p-2 mr-2" />
+      <select id="bBeast" class="border rounded p-2 mr-2">
+        <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
+      </select>
+      <select id="bKin" class="border rounded p-2 mr-2">
+        <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
+      </select>
+      <select id="bBranch" class="border rounded p-2 mr-2">
+        <option>子</option><option>丑</option><option>寅</option><option>卯</option><option>辰</option><option>巳</option>
+        <option>午</option><option>未</option><option>申</option><option>酉</option><option>戌</option><option>亥</option>
+      </select>
     </div>
 
-    <!-- 情境選擇 -->
+    <!-- 情境 -->
     <div class="mb-4">
       <label class="font-semibold">情境：</label>
       <select id="context" class="border rounded p-2">
@@ -52,26 +70,35 @@
       </select>
     </div>
 
+    <!-- 檔名 -->
+    <div class="mb-4">
+      <label class="font-semibold">輸出檔名：</label>
+      <input id="filename" class="border rounded p-2 w-full" placeholder="例如：青龍子x朱雀寅_職場分析.pdf" />
+    </div>
+
     <!-- 分析按鈕 -->
-    <button onclick="startAnalysis()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">開始分析</button>
+    <button onclick="startAnalysis()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
+      開始分析
+    </button>
 
     <!-- 進度條 -->
     <div id="progress" class="w-full bg-gray-200 rounded mt-4 hidden">
-      <div id="progress-bar" class="bg-blue-600 text-xs leading-none py-1 text-center text-white rounded w-0">0%</div>
+      <div id="progress-bar" class="bg-indigo-600 text-xs leading-none py-1 text-center text-white rounded w-0">0%</div>
     </div>
 
-    <!-- 分析結果 -->
-    <div id="result" class="mt-6 hidden print-card p-4 border rounded shadow">
+    <!-- 結果 -->
+    <div id="result" class="mt-6 hidden print-card p-6 border rounded-2xl shadow-xl bg-gradient-to-r from-pink-50 to-yellow-50">
+      <h2 class="text-xl font-bold text-pink-600 mb-4">分析結果</h2>
       <div id="result-text" class="whitespace-pre-line mb-4 text-sm"></div>
       <canvas id="radarChart" width="300" height="300"></canvas>
 
       <!-- 列印與下載 PDF -->
       <div class="mt-4 flex gap-4">
-        <button onclick="printResult()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 no-print">
+        <button onclick="printResult()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 no-print">
           列印分析結果
         </button>
-        <button onclick="downloadPDF()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 no-print">
-          下載 PDF
+        <button onclick="downloadPDF()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 no-print">
+          下載彩色 PDF
         </button>
       </div>
     </div>
@@ -80,28 +107,27 @@
 <script>
 let chartInstance = null;
 
-// 顯示進度條
+// 分析流程
 async function startAnalysis() {
   document.getElementById("progress").classList.remove("hidden");
   let progress = 0;
   const interval = setInterval(() => {
-    if (progress < 90) {
-      progress += 10;
-      updateProgress(progress);
-    }
+    if (progress < 90) { progress += 10; updateProgress(progress); }
   }, 300);
 
   const mode = document.getElementById("mode").value;
-  const aBeast = document.getElementById("aBeast").value || "青龍";
-  const aBranch = document.getElementById("aBranch").value || "子";
-  const bBeast = document.getElementById("bBeast").value || "朱雀";
-  const bBranch = document.getElementById("bBranch").value || "寅";
+  const aBeast = document.getElementById("aBeast").value;
+  const aKin = document.getElementById("aKin").value;
+  const aBranch = document.getElementById("aBranch").value;
+  const bBeast = document.getElementById("bBeast").value;
+  const bKin = document.getElementById("bKin").value;
+  const bBranch = document.getElementById("bBranch").value;
   const context = document.getElementById("context").value;
 
   const response = await fetch("/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, aBeast, aBranch, bBeast, bBranch, context })
+    body: JSON.stringify({ mode, aBeast, aKin, aBranch, bBeast, bKin, bBranch, context })
   });
   const data = await response.json();
 
@@ -124,7 +150,7 @@ function showResult(text, scores) {
   drawRadar(scores);
 }
 
-// 畫雷達圖
+// 雷達圖
 function drawRadar(scores) {
   const ctx = document.getElementById("radarChart").getContext("2d");
   if (chartInstance) chartInstance.destroy();
@@ -138,8 +164,9 @@ function drawRadar(scores) {
         label: "能量分布",
         data: values,
         fill: true,
-        borderColor: "rgba(54,162,235,1)",
-        backgroundColor: "rgba(54,162,235,0.2)"
+        borderColor: "rgba(99,102,241,1)",
+        backgroundColor: "rgba(99,102,241,0.2)",
+        pointBackgroundColor: "rgba(236,72,153,1)"
       }]
     },
     options: { responsive: true, scales: { r: { beginAtZero: true, max: 10 } } }
@@ -147,27 +174,28 @@ function drawRadar(scores) {
 }
 
 // 列印
-function printResult() {
-  window.print();
-}
+function printResult() { window.print(); }
 
-// 下載 PDF
-function downloadPDF() {
+// PDF 下載（彩色排版）
+async function downloadPDF() {
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-  const text = document.getElementById("result-text").innerText;
-  pdf.setFontSize(12);
-  pdf.text(text, 10, 20);
+  const pdf = new jsPDF("p", "mm", "a4");
+  const filename = document.getElementById("filename").value.trim() || "分析結果.pdf";
 
-  // 匯出雷達圖
-  const canvas = document.getElementById("radarChart");
+  // 把 result 卡片截圖
+  const result = document.getElementById("result");
+  const canvas = await html2canvas(result, { scale: 2 });
   const imgData = canvas.toDataURL("image/png");
-  pdf.addImage(imgData, "PNG", 10, 80, 180, 120);
 
-  pdf.save("分析結果.pdf");
+  // 等比例縮放
+  const imgWidth = 190;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
+
+  pdf.save(filename.endsWith(".pdf") ? filename : filename + ".pdf");
 }
 
-// 切換單人 / 雙人
+// 切換模式
 document.getElementById("mode").addEventListener("change", function() {
   if (this.value === "single") {
     document.getElementById("single-inputs").classList.remove("hidden");
