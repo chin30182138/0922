@@ -2,90 +2,94 @@
 // 檔案：api/analyze.js
 // ==========================
 
+// ===== 模板函數 =====
+
+// 性愛篇
+function buildSexAnalysis(aBeast, aBranch, bBeast, bBranch) {
+  return {
+    text: `
+${aBeast}${aBranch} X ${bBeast}${bBranch} - 靈活變化與機智較量的極致碰撞 
+• 情愛指數：9.5/10（挑逗遊戲與誘惑掌控的雙重樂趣） 
+• 互動模式：${aBeast}${aBranch} 聰明且擅長調戲，${bBeast}${bBranch} 靈活多變。
+• 雷點分析：雙方都喜歡主導，可能因為爭奪掌控權而過於競爭。
+• 推薦體位：交錯後入、翻轉騎乘
+• 推薦玩具：震動指環、語音控制震動器
+    `,
+    scores: { 情感: 9.5, 事業: 5, 健康: 7, 財運: 6, 智慧: 5 }
+  };
+}
+
+// 職場篇
+function buildWorkAnalysis(aBeast, aBranch, bBeast, bBranch) {
+  return {
+    text: `
+🐉 ${aBeast}${aBranch}上司 VS ${bBeast}${bBranch}下屬
+
+互動模式分析：上司強攻快打，下屬謀略算計，互信度低。
+衝突：戰術優先權、功勞歸屬、未來發展。
+應對策略：設「戰術會議」、公開感謝、提前談好升遷路徑。
+    `,
+    scores: { 情感: 5, 事業: 9, 健康: 6, 財運: 8, 智慧: 7 }
+  };
+}
+
+// 人際篇
+function buildRelationAnalysis(aBeast, aBranch, bBeast, bBranch) {
+  return {
+    text: `
+🤝 ${aBeast}${aBranch} 與 ${bBeast}${bBranch} 的人際互動
+
+互補特質：${aBeast}外向掌控氣氛，${bBeast}細膩善於觀察。
+優勢：熱情 × 細膩，形成默契。
+盲點：${aBeast}忽略細節，${bBeast}顧慮太多。
+建議：${aBeast}多聽，${bBeast}多說。
+    `,
+    scores: { 情感: 8, 事業: 6, 健康: 7, 財運: 5, 智慧: 6 }
+  };
+}
+
+// 愛情篇
+function buildLoveAnalysis(aBeast, aBranch, bBeast, bBranch) {
+  return {
+    text: `
+❤️ ${aBeast}${aBranch} 與 ${bBeast}${bBranch} 的愛情火花
+
+互動模式：${aBeast}熱情直接，${bBeast}溫柔細膩。
+挑戰：${aBeast}過急、${bBeast}過被動。
+建議：放慢節奏 + 增加回應。
+    `,
+    scores: { 情感: 9, 事業: 4, 健康: 7, 財運: 5, 智慧: 6 }
+  };
+}
+
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
-    }
+    const { mode, aBeast, aBranch, bBeast, bBranch, context } = req.body ?? {};
+    let result;
 
-    const { mode, aBeast, aKin, aBranch, bBeast, bKin, bBranch, context } = req.body ?? {};
-
-    // 組合提示詞
-    let prompt = "";
-    if (mode === "single") {
-      prompt = `請根據以下資訊進行分析：
-六獸：${aBeast}
-六親：${aKin}
-地支：${aBranch}
-情境：${context}
-
-請輸出一段文字說明，並給五個分數 (情感、事業、健康、財運、智慧)，每個 0~10。`;
+    if (mode === "double" && context === "性愛") {
+      result = buildSexAnalysis(aBeast, aBranch, bBeast, bBranch);
+    } else if (mode === "double" && context === "職場") {
+      result = buildWorkAnalysis(aBeast, aBranch, bBeast, bBranch);
+    } else if (mode === "double" && context === "人際關係") {
+      result = buildRelationAnalysis(aBeast, aBranch, bBeast, bBranch);
+    } else if (mode === "double" && context === "愛情") {
+      result = buildLoveAnalysis(aBeast, aBranch, bBeast, bBranch);
     } else {
-      prompt = `請根據以下雙人資訊進行分析：
-甲方：${aBeast} × ${aKin} × ${aBranch}
-乙方：${bBeast} × ${bKin} × ${bBranch}
-情境：${context}
-
-請輸出一段文字說明，並給五個分數 (情感、事業、健康、財運、智慧)，每個 0~10。`;
-    }
-
-    // 呼叫 OpenAI API
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7
-      })
-    });
-
-    const data = await response.json();
-
-    // 抓 GPT 輸出
-    const rawText = data.choices?.[0]?.message?.content || "無法生成分析";
-
-    // 嘗試解析分數（假設 GPT 輸出 JSON 格式）
-    let scores = {
-      情感: 0,
-      事業: 0,
-      健康: 0,
-      財運: 0,
-      智慧: 0
-    };
-
-    try {
-      const match = rawText.match(/\{[\s\S]*\}/); // 嘗試抓 JSON
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        scores = { ...scores, ...parsed };
-      }
-    } catch (e) {
-      console.warn("JSON 解析失敗，使用預設分數");
-      // 如果 GPT 沒給 JSON，就給隨機分數
-      scores = {
-        情感: Math.floor(Math.random() * 10) + 1,
-        事業: Math.floor(Math.random() * 10) + 1,
-        健康: Math.floor(Math.random() * 10) + 1,
-        財運: Math.floor(Math.random() * 10) + 1,
-        智慧: Math.floor(Math.random() * 10) + 1
+      result = {
+        text: `【${context || "綜合"}分析】\n選項：${aBeast}${aBranch} × ${bBeast}${bBranch}`,
+        scores: { 情感: 6, 事業: 6, 健康: 6, 財運: 6, 智慧: 6 }
       };
     }
 
-    return res.status(200).json({
-      text: rawText,
-      scores
-    });
+    res.status(200).json(result);
 
   } catch (err) {
     console.error("Analyze API Error:", err);
-    return res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 }
