@@ -1,247 +1,187 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>六獸 AI 分析系統</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>仙人指路 六獸個性分析</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body { background: linear-gradient(to right, #fdf2f8, #ede9fe); font-family: "Microsoft JhengHei", sans-serif; }
+    .card { background: #fff; border-radius: 1rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 1.5rem; margin-top: 1rem; }
+    .progress { height: 16px; border-radius: 9999px; overflow: hidden; background: #e5e7eb; }
+    .progress-bar { height: 100%; width: 0%; transition: width 2s ease-in-out; text-align: right; color: #fff; padding-right: 5px; font-size: 12px; }
+    select { border: 1px solid #ccc; padding: 4px 6px; border-radius: 6px; }
+  </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 text-gray-800 transition-colors duration-300">
+<body class="p-6">
 
-  <div class="max-w-6xl mx-auto p-6">
-    <h1 class="text-3xl font-bold text-center text-purple-700 mb-6">六獸 AI 分析系統</h1>
+  <h1 class="text-2xl font-bold text-center text-purple-600">六獸個性預測分析系統</h1>
 
-    <!-- 姓名 -->
-    <div class="mb-6">
-      <label class="block text-sm font-bold mb-1">姓名</label>
-      <input id="userName" class="w-full border rounded p-2" placeholder="輸入姓名">
-    </div>
+  <!-- 切換單人 / 雙人 -->
+  <div class="flex justify-center gap-4 mt-4">
+    <button onclick="setMode('single')" class="px-4 py-2 bg-blue-500 text-white rounded-lg">單人分析</button>
+    <button onclick="setMode('dual')" class="px-4 py-2 bg-pink-500 text-white rounded-lg">雙人分析</button>
+  </div>
 
-    <!-- 模式切換 -->
-    <div class="flex justify-center gap-4 mb-6">
-      <button onclick="switchMode('single')" id="btnSingle" class="px-4 py-2 bg-indigo-500 text-white rounded shadow">單人模式</button>
-      <button onclick="switchMode('dual')" id="btnDual" class="px-4 py-2 bg-gray-300 text-black rounded shadow">雙人模式</button>
-    </div>
-
-    <!-- 單人模式 -->
-    <div id="singleMode" class="mb-6">
-      <div class="grid grid-cols-3 gap-4">
-        <div>
-          <label class="block text-sm font-bold mb-1">六獸</label>
-          <select id="singleBeast" class="w-full border rounded p-2 bg-purple-50 shadow">
-            <option>青龍</option><option>朱雀</option><option>勾陳</option>
-            <option>螣蛇</option><option>白虎</option><option>玄武</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-bold mb-1">六親</label>
-          <select id="singleKin" class="w-full border rounded p-2 bg-purple-50 shadow">
-            <option>父母</option><option>兄弟</option><option>子孫</option>
-            <option>妻財</option><option>官鬼</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-bold mb-1">地支</label>
-          <select id="singleBranch" class="w-full border rounded p-2 bg-purple-50 shadow">
-            <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-            <option>辰</option><option>巳</option><option>午</option><option>未</option>
-            <option>申</option><option>酉</option><option>戌</option><option>亥</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- 雙人模式 -->
-    <div id="dualMode" class="mb-6 hidden">
-      <h2 class="font-bold mb-2">角色 A</h2>
-      <div class="grid grid-cols-3 gap-4 mb-4">
-        <select id="aBeast" class="border rounded p-2 bg-purple-50 shadow">
+  <!-- 六親六獸地支選單 -->
+  <div id="inputArea" class="card">
+    <h2 class="text-lg font-bold text-gray-700 mb-2">角色設定</h2>
+    <div id="singleInput" class="space-y-2">
+      <label>六獸：
+        <select id="aBeast">
           <option>青龍</option><option>朱雀</option><option>勾陳</option>
           <option>螣蛇</option><option>白虎</option><option>玄武</option>
         </select>
-        <select id="aKin" class="border rounded p-2 bg-purple-50 shadow">
+      </label>
+      <label>六親：
+        <select id="aKin">
           <option>父母</option><option>兄弟</option><option>子孫</option>
           <option>妻財</option><option>官鬼</option>
         </select>
-        <select id="aBranch" class="border rounded p-2 bg-purple-50 shadow">
+      </label>
+      <label>地支：
+        <select id="aBranch">
           <option>子</option><option>丑</option><option>寅</option><option>卯</option>
           <option>辰</option><option>巳</option><option>午</option><option>未</option>
           <option>申</option><option>酉</option><option>戌</option><option>亥</option>
         </select>
-      </div>
-      <h2 class="font-bold mb-2">角色 B</h2>
-      <div class="grid grid-cols-3 gap-4">
-        <select id="bBeast" class="border rounded p-2 bg-purple-50 shadow">
+      </label>
+    </div>
+
+    <div id="dualInput" class="hidden space-y-2 mt-4">
+      <h3 class="font-bold">對手角色設定</h3>
+      <label>六獸：
+        <select id="bBeast">
           <option>青龍</option><option>朱雀</option><option>勾陳</option>
           <option>螣蛇</option><option>白虎</option><option>玄武</option>
         </select>
-        <select id="bKin" class="border rounded p-2 bg-purple-50 shadow">
+      </label>
+      <label>六親：
+        <select id="bKin">
           <option>父母</option><option>兄弟</option><option>子孫</option>
           <option>妻財</option><option>官鬼</option>
         </select>
-        <select id="bBranch" class="border rounded p-2 bg-purple-50 shadow">
+      </label>
+      <label>地支：
+        <select id="bBranch">
           <option>子</option><option>丑</option><option>寅</option><option>卯</option>
           <option>辰</option><option>巳</option><option>午</option><option>未</option>
           <option>申</option><option>酉</option><option>戌</option><option>亥</option>
         </select>
-      </div>
-    </div>
-
-    <!-- 分析按鈕 -->
-    <div class="flex gap-4 mb-6 flex-wrap">
-      <button onclick="analyze('職場')" class="px-4 py-2 bg-blue-500 text-white rounded">職場分析</button>
-      <button onclick="analyze('愛情')" class="px-4 py-2 bg-pink-500 text-white rounded">愛情分析</button>
-      <button onclick="analyze('性愛')" class="px-4 py-2 bg-red-500 text-white rounded">性愛分析</button>
-      <button onclick="analyze('個性')" class="px-4 py-2 bg-purple-600 text-white rounded">個性分析</button>
-      <button onclick="loadHistory()" class="px-4 py-2 bg-gray-600 text-white rounded">歷史紀錄</button>
-    </div>
-
-    <!-- 色彩模式 -->
-    <div class="flex gap-6 mb-6 flex-wrap">
-      <div>
-        <label class="block text-sm font-bold text-gray-700">雷達圖顏色</label>
-        <select id="colorSelect" class="mt-1 p-2 border rounded bg-yellow-50">
-          <option value="rgba(255,99,132,0.5)">紅色</option>
-          <option value="rgba(54,162,235,0.5)">藍色</option>
-          <option value="rgba(75,192,192,0.5)">綠色</option>
-          <option value="rgba(255,206,86,0.5)">黃色</option>
-          <option value="rgba(153,102,255,0.5)">紫色</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-bold text-gray-700">背景顏色</label>
-        <input type="color" id="bgPicker" value="#fff0f5" class="mt-1 h-10 w-20 border rounded">
-      </div>
-    </div>
-
-    <!-- 進度條 -->
-    <div class="w-full bg-gray-200 rounded-full h-5 mb-4">
-      <div id="progressBar" class="h-5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-xs text-white text-center leading-5">0%</div>
-    </div>
-
-    <!-- 分析結果 -->
-    <div id="analysisResult" class="bg-white shadow rounded p-6 mb-6 min-h-[200px]"></div>
-
-    <!-- 雷達圖 -->
-    <div class="bg-white shadow rounded p-6 mb-6">
-      <canvas id="radarChart"></canvas>
-    </div>
-
-    <!-- 功能 -->
-    <div class="mt-6 text-center flex gap-4 justify-center">
-      <button onclick="window.print()" class="px-6 py-2 bg-green-600 text-white rounded shadow">列印結果</button>
-      <button onclick="downloadPDF()" class="px-6 py-2 bg-indigo-600 text-white rounded shadow">下載 PDF</button>
+      </label>
     </div>
   </div>
 
+  <!-- 分析類別 -->
+  <div class="flex flex-wrap gap-2 justify-center mt-4">
+    <button onclick="analyze('職場')" class="px-3 py-2 bg-green-500 text-white rounded-lg">職場分析</button>
+    <button onclick="analyze('愛情')" class="px-3 py-2 bg-red-500 text-white rounded-lg">愛情分析</button>
+    <button onclick="analyze('性愛')" class="px-3 py-2 bg-pink-600 text-white rounded-lg">性愛分析</button>
+    <button onclick="analyze('個性')" class="px-3 py-2 bg-purple-500 text-white rounded-lg">個性分析</button>
+  </div>
+
+  <!-- 進度條 -->
+  <div class="progress mt-6">
+    <div id="progressBar" class="progress-bar bg-gradient-to-r from-purple-400 to-pink-500">0%</div>
+  </div>
+
+  <!-- 分析結果 -->
+  <div id="analysisResult" class="card text-gray-800 text-lg"></div>
+
+  <!-- 雷達圖 -->
+  <div class="card">
+    <h2 class="text-lg font-bold mb-2">能量分布</h2>
+    <canvas id="radarChart" width="400" height="400"></canvas>
+  </div>
+
+  <!-- 控制面板 -->
+  <div class="card">
+    <h2 class="text-lg font-bold">介面設定</h2>
+    <label>背景顏色：<input type="color" id="bgColor" value="#fdf2f8" onchange="document.body.style.background=this.value"></label><br>
+    <label>雷達圖顏色：<input type="color" id="radarColor" value="#ec4899" onchange="updateRadarColor(this.value)"></label>
+  </div>
+
+  <!-- PDF 匯出 -->
+  <div class="card">
+    <h2 class="text-lg font-bold">下載報告</h2>
+    <input id="pdfName" type="text" placeholder="輸入檔名" class="border p-1 rounded">
+    <button onclick="downloadPDF()" class="ml-2 px-4 py-2 bg-indigo-500 text-white rounded-lg">下載 PDF</button>
+  </div>
+
   <script>
-    let currentMode = "single";
+    let mode = "single";
+    let radarChart;
 
-    // 切換模式
-    function switchMode(mode) {
-      currentMode = mode;
-      document.getElementById("singleMode").classList.toggle("hidden", mode !== "single");
-      document.getElementById("dualMode").classList.toggle("hidden", mode !== "dual");
-      document.getElementById("btnSingle").className = mode === "single" ? "px-4 py-2 bg-indigo-500 text-white rounded shadow" : "px-4 py-2 bg-gray-300 text-black rounded shadow";
-      document.getElementById("btnDual").className = mode === "dual" ? "px-4 py-2 bg-indigo-500 text-white rounded shadow" : "px-4 py-2 bg-gray-300 text-black rounded shadow";
+    function setMode(m) {
+      mode = m;
+      document.getElementById("dualInput").classList.toggle("hidden", m !== "dual");
     }
 
-    // 初始化雷達圖
-    const ctx = document.getElementById('radarChart').getContext('2d');
-    const radarChart = new Chart(ctx, {
-      type: 'radar',
-      data: {
-        labels: ["情感", "事業", "健康", "財運", "智慧"],
-        datasets: [{
-          label: "能量分布",
-          data: [0,0,0,0,0],
-          backgroundColor: "rgba(255,99,132,0.3)",
-          borderColor: "rgba(255,99,132,1)",
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { font: { size: 16 } } } },
-        scales: { r: { min: 0, max: 10, ticks: { stepSize: 1, font: { size: 14 } }, pointLabels: { font: { size: 18 } } } }
-      }
-    });
-
-    // 色彩控制
-    document.getElementById("colorSelect").addEventListener("change", (e) => {
-      const color = e.target.value;
-      radarChart.data.datasets[0].backgroundColor = color;
-      radarChart.data.datasets[0].borderColor = color.replace("0.5","1");
-      radarChart.update();
-    });
-    document.getElementById("bgPicker").addEventListener("input", (e) => {
-      document.body.style.background = e.target.value;
-    });
-
-    // 模擬 API（實際要接 analyze.js）
-    async function analyze(type) {
-      const progress = document.getElementById("progressBar");
-      let percent = 0;
-      progress.style.width = "0%"; progress.textContent = "0%";
-      const interval = setInterval(() => {
-        if (percent < 90) { percent++; progress.style.width = percent + "%"; progress.textContent = percent + "%"; }
-      }, 30);
-
+    async function analyze(context) {
+      document.getElementById("progressBar").style.width = "0%";
+      document.getElementById("progressBar").innerText = "0%";
       setTimeout(() => {
-        clearInterval(interval);
-        progress.style.width = "100%"; progress.textContent = "100%";
+        document.getElementById("progressBar").style.width = "100%";
+        document.getElementById("progressBar").innerText = "100%";
+      }, 200);
 
-        let fakeResult = "";
-        if (type === "職場") {
-          fakeResult = `<h3>雙層角色設定</h3><ul><li>青龍子上司：強攻快打</li><li>寅木下屬：野心策略</li></ul>
-                        <h3>互動模式分析</h3><p>上司要快，下屬要穩，衝突高。</p>`;
-        } else if (type === "性愛") {
-          fakeResult = `<h3>情愛指數：9.5/10</h3><p>挑逗遊戲，充滿博弈。</p>
-                        <h3>推薦體位</h3><ul><li>交錯後入</li><li>翻轉騎乘</li></ul>`;
-        } else {
-          fakeResult = `<p>這裡是 ${type} 的格式化分析內容。</p>`;
-        }
+      const body = {
+        mode,
+        aBeast: document.getElementById("aBeast").value,
+        aKin: document.getElementById("aKin").value,
+        aBranch: document.getElementById("aBranch").value,
+        bBeast: mode === "dual" ? document.getElementById("bBeast").value : null,
+        bKin: mode === "dual" ? document.getElementById("bKin").value : null,
+        bBranch: mode === "dual" ? document.getElementById("bBranch").value : null,
+        context
+      };
 
-        document.getElementById("analysisResult").innerHTML = `
-          <h3 class="font-bold text-lg mb-2">${type} 分析結果</h3>
-          <div>${fakeResult}</div>
-        `;
+      const res = await fetch("/api/analyze", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
 
-        radarChart.data.datasets[0].data = [
-          Math.floor(Math.random()*10),
-          Math.floor(Math.random()*10),
-          Math.floor(Math.random()*10),
-          Math.floor(Math.random()*10),
-          Math.floor(Math.random()*10)
-        ];
-        radarChart.update();
-      }, 1500);
+      document.getElementById("analysisResult").innerHTML = data.text.replace(/\n/g, "<br>");
+      updateRadarChart(data.radar);
     }
 
-    // PDF 匯出修正版
-    async function downloadPDF() {
-      const { jsPDF } = window.jspdf;
-      let filename = prompt("請輸入檔名：", document.getElementById("userName").value || "六獸分析") + ".pdf";
+    function updateRadarChart(scores) {
+      const ctx = document.getElementById("radarChart").getContext("2d");
+      if (radarChart) radarChart.destroy();
+      radarChart = new Chart(ctx, {
+        type: "radar",
+        data: {
+          labels: Object.keys(scores),
+          datasets: [{
+            label: "能量分布",
+            data: Object.values(scores),
+            backgroundColor: document.getElementById("radarColor").value + "33",
+            borderColor: document.getElementById("radarColor").value,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          scales: { r: { min: 0, max: 10, ticks: { stepSize: 1, font: { size: 14 } } } }
+        }
+      });
+    }
 
-      const doc = new jsPDF("p", "mm", "a4");
-      const analysis = document.getElementById("analysisResult");
-      const canvas1 = await html2canvas(analysis, { scale: 2 });
-      const imgData1 = canvas1.toDataURL("image/png");
-      let pdfWidth = doc.internal.pageSize.getWidth() - 20;
-      let imgHeight = (canvas1.height * pdfWidth) / canvas1.width;
-      doc.addImage(imgData1, "PNG", 10, 10, pdfWidth, imgHeight);
+    function updateRadarColor(color) {
+      if (radarChart) {
+        radarChart.data.datasets[0].backgroundColor = color + "33";
+        radarChart.data.datasets[0].borderColor = color;
+        radarChart.update();
+      }
+    }
 
-      const canvas2 = document.getElementById("radarChart");
-      const radarImg = canvas2.toDataURL("image/png");
-      let ratio = Math.min(150 / canvas2.width, 100 / canvas2.height);
-      let finalW = canvas2.width * ratio;
-      let finalH = canvas2.height * ratio;
-      doc.addImage(radarImg, "PNG", 10, imgHeight + 20, finalW, finalH);
-
-      doc.save(filename);
+    function downloadPDF() {
+      const name = document.getElementById("pdfName").value || "分析報告";
+      const element = document.body;
+      const opt = { margin: 0.5, filename: name + ".pdf", image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: "in", format: "a4", orientation: "portrait" } };
+      html2pdf().set(opt).from(element).save();
     }
   </script>
 </body>
