@@ -1,95 +1,68 @@
 // ==========================
-// 檔案：api/analyze.js
+//    文件：api/analyze.js
 // ==========================
-
-// ===== 模板函數 =====
-
-// 性愛篇
-function buildSexAnalysis(aBeast, aBranch, bBeast, bBranch) {
-  return {
-    text: `
-${aBeast}${aBranch} X ${bBeast}${bBranch} - 靈活變化與機智較量的極致碰撞 
-• 情愛指數：9.5/10（挑逗遊戲與誘惑掌控的雙重樂趣） 
-• 互動模式：${aBeast}${aBranch} 聰明且擅長調戲，${bBeast}${bBranch} 靈活多變。
-• 雷點分析：雙方都喜歡主導，可能因為爭奪掌控權而過於競爭。
-• 推薦體位：交錯後入、翻轉騎乘
-• 推薦玩具：震動指環、語音控制震動器
-    `,
-    scores: { 情感: 9.5, 事業: 5, 健康: 7, 財運: 6, 智慧: 5 }
-  };
-}
-
-// 職場篇
-function buildWorkAnalysis(aBeast, aBranch, bBeast, bBranch) {
-  return {
-    text: `
-🐉 ${aBeast}${aBranch}上司 VS ${bBeast}${bBranch}下屬
-
-互動模式分析：上司強攻快打，下屬謀略算計，互信度低。
-衝突：戰術優先權、功勞歸屬、未來發展。
-應對策略：設「戰術會議」、公開感謝、提前談好升遷路徑。
-    `,
-    scores: { 情感: 5, 事業: 9, 健康: 6, 財運: 8, 智慧: 7 }
-  };
-}
-
-// 人際篇
-function buildRelationAnalysis(aBeast, aBranch, bBeast, bBranch) {
-  return {
-    text: `
-🤝 ${aBeast}${aBranch} 與 ${bBeast}${bBranch} 的人際互動
-
-互補特質：${aBeast}外向掌控氣氛，${bBeast}細膩善於觀察。
-優勢：熱情 × 細膩，形成默契。
-盲點：${aBeast}忽略細節，${bBeast}顧慮太多。
-建議：${aBeast}多聽，${bBeast}多說。
-    `,
-    scores: { 情感: 8, 事業: 6, 健康: 7, 財運: 5, 智慧: 6 }
-  };
-}
-
-// 愛情篇
-function buildLoveAnalysis(aBeast, aBranch, bBeast, bBranch) {
-  return {
-    text: `
-❤️ ${aBeast}${aBranch} 與 ${bBeast}${bBranch} 的愛情火花
-
-互動模式：${aBeast}熱情直接，${bBeast}溫柔細膩。
-挑戰：${aBeast}過急、${bBeast}過被動。
-建議：放慢節奏 + 增加回應。
-    `,
-    scores: { 情感: 9, 事業: 4, 健康: 7, 財運: 5, 智慧: 6 }
-  };
-}
-
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const { mode, aBeast, aBranch, bBeast, bBranch, context } = req.body ?? {};
-    let result;
-
-    if (mode === "double" && context === "性愛") {
-      result = buildSexAnalysis(aBeast, aBranch, bBeast, bBranch);
-    } else if (mode === "double" && context === "職場") {
-      result = buildWorkAnalysis(aBeast, aBranch, bBeast, bBranch);
-    } else if (mode === "double" && context === "人際關係") {
-      result = buildRelationAnalysis(aBeast, aBranch, bBeast, bBranch);
-    } else if (mode === "double" && context === "愛情") {
-      result = buildLoveAnalysis(aBeast, aBranch, bBeast, bBranch);
-    } else {
-      result = {
-        text: `【${context || "綜合"}分析】\n選項：${aBeast}${aBranch} × ${bBeast}${bBranch}`,
-        scores: { 情感: 6, 事業: 6, 健康: 6, 財運: 6, 智慧: 6 }
-      };
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ error: "missing_env", detail: "OPENAI_API_KEY not set" });
     }
 
-    res.status(200).json(result);
+    const { mode, aBeast, aKin, aBranch, bBeast, bKin, bBranch, context, multi } = req.body ?? {};
 
+    // 📦 Prompt 範本庫（同之前）
+    const templates = {
+      "職場": `...職場篇格式...`,
+      "人際關係": `...人際關係篇格式...`,
+      "愛情": `...愛情篇格式...`,
+      "性愛": `...性愛篇格式...`,
+      "綜合": `...綜合篇格式...`
+    };
+
+    // ⏩ 如果是「批次模式」 → 直接跑三種情境
+    const contexts = multi ? ["職場", "愛情", "性愛"] : [context || "綜合"];
+
+    let results = [];
+
+    for (const ctx of contexts) {
+      const prompt = templates[ctx];
+
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.85,
+        }),
+      });
+
+      const result = await response.json();
+      const content = result.choices?.[0]?.message?.content || "（未生成內容）";
+
+      // 預設分數
+      let scores = { "情感": 5, "事業": 5, "健康": 5, "財運": 5, "智慧": 5 };
+      try {
+        const match = content.match(/\{[\s\S]*\}/);
+        if (match) {
+          scores = JSON.parse(match[0]);
+        }
+      } catch (e) {
+        console.error("JSON 解析錯誤", e);
+      }
+
+      results.push({ context: ctx, text: content, scores });
+    }
+
+    res.status(200).json({ results });
   } catch (err) {
-    console.error("Analyze API Error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error(err);
+    res.status(500).json({ error: "server_error", detail: err.message });
   }
 }
