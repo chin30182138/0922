@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-gradient-to-br from-pink-50 to-purple-50 min-h-screen p-6">
@@ -22,35 +21,82 @@
     </div>
     <div>
       <label class="font-bold text-lg">解析人屬名：</label>
-      <input id="interpreter" class="border p-2 rounded w-full" placeholder="例如：阿青師" />
+      <input id="interpreter" class="border p-2 rounded w-full" />
     </div>
     <div>
-      <label class="font-bold text-lg">自訂網址（可選）：</label>
-      <input id="qrUrl" class="border p-2 rounded w-full" placeholder="https://www.facebook.com/chin168888/" />
+      <label class="font-bold text-lg">自訂網址：</label>
+      <input id="qrUrl" class="border p-2 rounded w-full" />
     </div>
-    <div class="grid grid-cols-3 gap-4">
-      <div>
-        <label class="font-bold text-lg">六親：</label>
-        <select id="kin" class="border p-2 rounded w-full text-blue-700 font-bold">
-          <option>父母</option><option>兄弟</option><option>子孫</option>
-          <option>妻財</option><option>官鬼</option>
-        </select>
-      </div>
-      <div>
-        <label class="font-bold text-lg">六獸：</label>
-        <select id="beast" class="border p-2 rounded w-full text-green-700 font-bold">
-          <option>青龍</option><option>朱雀</option><option>勾陳</option>
-          <option>螣蛇</option><option>白虎</option><option>玄武</option>
-        </select>
-      </div>
-      <div>
-        <label class="font-bold text-lg">地支：</label>
-        <select id="branch" class="border p-2 rounded w-full text-purple-700 font-bold">
-          <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-          <option>辰</option><option>巳</option><option>午</option><option>未</option>
-          <option>申</option><option>酉</option><option>戌</option><option>亥</option>
-        </select>
-      </div>
+    <button onclick="saveSettings()" class="bg-green-600 text-white px-4 py-2 rounded-lg mt-2">存檔設定</button>
+  </div>
+
+  <!-- 模式切換 -->
+  <div class="flex justify-center mb-6">
+    <button onclick="toggleMode('single')" id="btnSingle" class="bg-blue-500 text-white px-4 py-2 rounded-l-lg">單人模式</button>
+    <button onclick="toggleMode('double')" id="btnDouble" class="bg-gray-300 text-black px-4 py-2 rounded-r-lg">雙人模式</button>
+  </div>
+
+  <!-- 單人選單 -->
+  <div id="singleInputs" class="grid grid-cols-3 gap-4 mb-6">
+    <div>
+      <label class="font-bold text-lg">六親：</label>
+      <select id="kin1" class="border p-2 rounded w-full text-blue-700 font-bold">
+        <option>父母</option><option>兄弟</option><option>子孫</option>
+        <option>妻財</option><option>官鬼</option>
+      </select>
+    </div>
+    <div>
+      <label class="font-bold text-lg">六獸：</label>
+      <select id="beast1" class="border p-2 rounded w-full text-green-700 font-bold">
+        <option>青龍</option><option>朱雀</option><option>勾陳</option>
+        <option>螣蛇</option><option>白虎</option><option>玄武</option>
+      </select>
+    </div>
+    <div>
+      <label class="font-bold text-lg">地支：</label>
+      <select id="branch1" class="border p-2 rounded w-full text-purple-700 font-bold">
+        <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+        <option>辰</option><option>巳</option><option>午</option><option>未</option>
+        <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 雙人選單 -->
+  <div id="doubleInputs" class="grid grid-cols-3 gap-4 mb-6 hidden">
+    <div>
+      <label class="font-bold text-lg">六親(甲)：</label>
+      <select id="kin2" class="border p-2 rounded w-full text-blue-700 font-bold">
+        <option>父母</option><option>兄弟</option><option>子孫</option>
+        <option>妻財</option><option>官鬼</option>
+      </select>
+    </div>
+    <div>
+      <label class="font-bold text-lg">六獸(甲)：</label>
+      <select id="beast2" class="border p-2 rounded w-full text-green-700 font-bold">
+        <option>青龍</option><option>朱雀</option><option>勾陳</option>
+        <option>螣蛇</option><option>白虎</option><option>玄武</option>
+      </select>
+    </div>
+    <div>
+      <label class="font-bold text-lg">地支(甲)：</label>
+      <select id="branch2" class="border p-2 rounded w-full text-purple-700 font-bold">
+        <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+        <option>辰</option><option>巳</option><option>午</option><option>未</option>
+        <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 顏色調整 -->
+  <div class="flex gap-6 mb-6 justify-center">
+    <div>
+      <label class="font-bold">背景顏色：</label>
+      <input type="color" id="bgColor" value="#fdf2f8" onchange="changeBackground()" />
+    </div>
+    <div>
+      <label class="font-bold">雷達圖顏色：</label>
+      <input type="color" id="chartColor" value="#9333ea" onchange="updateChartColor()" />
     </div>
   </div>
 
@@ -64,11 +110,6 @@
     <button onclick="window.print()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg">列印</button>
   </div>
 
-  <!-- 進度條 -->
-  <div class="w-full bg-gray-200 rounded-full h-6 mb-6">
-    <div id="progressBar" class="h-6 rounded-full bg-gradient-to-r from-pink-400 to-purple-500 text-center text-white text-sm">0%</div>
-  </div>
-
   <!-- 分析結果 -->
   <div id="result" class="bg-white rounded-xl shadow p-6 text-lg leading-relaxed"></div>
 
@@ -77,8 +118,64 @@
     <canvas id="radarChart"></canvas>
   </div>
 
+  <!-- QR Code -->
   <div id="qrcode" class="flex justify-center mt-6"></div>
 
   <script src="analyze.js"></script>
+  <script>
+    // --- 模式切換 ---
+    function toggleMode(mode) {
+      if (mode === "single") {
+        document.getElementById("singleInputs").classList.remove("hidden");
+        document.getElementById("doubleInputs").classList.add("hidden");
+        document.getElementById("btnSingle").classList.add("bg-blue-500","text-white");
+        document.getElementById("btnDouble").classList.remove("bg-blue-500","text-white");
+        document.getElementById("btnDouble").classList.add("bg-gray-300","text-black");
+      } else {
+        document.getElementById("singleInputs").classList.add("hidden");
+        document.getElementById("doubleInputs").classList.remove("hidden");
+        document.getElementById("btnDouble").classList.add("bg-blue-500","text-white");
+        document.getElementById("btnSingle").classList.remove("bg-blue-500","text-white");
+        document.getElementById("btnSingle").classList.add("bg-gray-300","text-black");
+      }
+    }
+
+    // --- 存設定 ---
+    function saveSettings() {
+      const interpreter = document.getElementById("interpreter").value;
+      const qrUrl = document.getElementById("qrUrl").value;
+      localStorage.setItem("interpreter", interpreter);
+      localStorage.setItem("qrUrl", qrUrl);
+      alert("設定已存檔，下次會自動載入！");
+    }
+
+    // --- 載設定 ---
+    window.onload = () => {
+      if (localStorage.getItem("interpreter")) {
+        document.getElementById("interpreter").value = localStorage.getItem("interpreter");
+      } else {
+        document.getElementById("interpreter").value = "阿青師";
+      }
+      if (localStorage.getItem("qrUrl")) {
+        document.getElementById("qrUrl").value = localStorage.getItem("qrUrl");
+      } else {
+        document.getElementById("qrUrl").value = "https://www.facebook.com/chin168888/";
+      }
+    };
+
+    // --- 背景顏色 ---
+    function changeBackground() {
+      document.body.style.backgroundColor = document.getElementById("bgColor").value;
+    }
+
+    // --- 更新雷達圖顏色 ---
+    function updateChartColor() {
+      if (window.radarChart) {
+        const color = document.getElementById("chartColor").value;
+        window.radarChart.data.datasets[0].borderColor = color;
+        window.radarChart.update();
+      }
+    }
+  </script>
 </body>
 </html>
