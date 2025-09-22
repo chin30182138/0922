@@ -31,6 +31,15 @@
   <!-- Content -->
   <main class="max-w-3xl mx-auto p-4">
     
+    <!-- 情境按鈕 -->
+    <div class="flex flex-wrap gap-2 justify-center my-4 no-print">
+      <button class="context-btn px-3 py-1 bg-slate-200 rounded" data-context="職場">職場</button>
+      <button class="context-btn px-3 py-1 bg-slate-200 rounded" data-context="對應關係">對應關係</button>
+      <button class="context-btn px-3 py-1 bg-slate-200 rounded" data-context="人際關係">人際關係</button>
+      <button class="context-btn px-3 py-1 bg-slate-200 rounded" data-context="愛情">愛情</button>
+      <button class="context-btn px-3 py-1 bg-slate-200 rounded" data-context="性愛">性愛</button>
+    </div>
+
     <!-- 單人分析 -->
     <section id="single-panel" class="mt-4">
       <div class="bg-white rounded-2xl shadow p-4">
@@ -89,6 +98,9 @@
     <section id="result" class="mt-6 hidden">
       <div class="bg-white p-4 rounded-2xl shadow print-card">
         <h2 class="font-bold text-lg mb-2">分析結果</h2>
+        <div id="progress" class="w-full bg-slate-200 h-4 rounded mb-4 hidden">
+          <div id="progress-bar" class="h-4 bg-amber-500 text-xs text-white text-center rounded" style="width:0%">0%</div>
+        </div>
         <p id="result-text" class="mb-4 text-slate-700">分析中...</p>
         <canvas id="radarChart" class="w-full h-64"></canvas>
       </div>
@@ -97,6 +109,9 @@
   </main>
 
   <script>
+    let currentContext = "";
+    let chartInstance;
+
     // Tab 切換
     const tabSingle = document.getElementById("tab-single");
     const tabDouble = document.getElementById("tab-double");
@@ -117,58 +132,88 @@
       singlePanel.classList.add("hidden");
     });
 
-    // 分析函數 (模擬)
-    let chartInstance;
-    function analyzeSingle() {
+    // 情境按鈕
+    document.querySelectorAll(".context-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        currentContext = btn.dataset.context;
+        document.querySelectorAll(".context-btn").forEach(b=>b.classList.remove("bg-amber-400"));
+        btn.classList.add("bg-amber-400");
+      });
+    });
+
+    // 模擬進度條
+    function runProgress(callback){
+      const bar = document.getElementById("progress-bar");
+      const box = document.getElementById("progress");
+      box.classList.remove("hidden");
+      let percent = 0;
+      const interval = setInterval(()=>{
+        percent += Math.floor(Math.random()*10)+5;
+        if(percent >= 100){ percent=100; clearInterval(interval); callback(); }
+        bar.style.width = percent+"%";
+        bar.textContent = percent+"%";
+      },200);
+    }
+
+    // 單人分析
+    async function analyzeSingle(){
       const beast = document.getElementById("s-beast").value;
       const kin = document.getElementById("s-kin").value;
       const branch = document.getElementById("s-branch").value;
-      if (!beast || !kin || !branch) {
-        alert("請完整選擇六獸、六親、地支");
-        return;
-      }
-      showResult(`【單人分析】${beast} × ${kin} × ${branch}`);
+      if(!beast||!kin||!branch){ alert("請完整選擇六獸、六親、地支"); return; }
+      showResult("分析中...");
+      runProgress(async ()=>{
+        const res = await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({mode:"single",aBeast:beast,aKin:kin,aBranch:branch,context:currentContext})});
+        const data = await res.json();
+        document.getElementById("result-text").innerText=data.text||"無分析結果";
+        drawRadar(data.scores);
+      });
     }
 
-    function analyzeDouble() {
-      const aBeast = document.getElementById("a-beast").value;
-      const aKin = document.getElementById("a-kin").value;
-      const aBranch = document.getElementById("a-branch").value;
-      const bBeast = document.getElementById("b-beast").value;
-      const bKin = document.getElementById("b-kin").value;
-      const bBranch = document.getElementById("b-branch").value;
-      if (!aBeast || !aKin || !aBranch || !bBeast || !bKin || !bBranch) {
-        alert("請完整選擇甲乙雙方的六獸、六親、地支");
-        return;
-      }
-      showResult(`【雙人分析】${aBeast} × ${aKin} × ${aBranch}  ＶＳ  ${bBeast} × ${bKin} × ${bBranch}`);
+    // 雙人分析
+    async function analyzeDouble(){
+      const aBeast=document.getElementById("a-beast").value;
+      const aKin=document.getElementById("a-kin").value;
+      const aBranch=document.getElementById("a-branch").value;
+      const bBeast=document.getElementById("b-beast").value;
+      const bKin=document.getElementById("b-kin").value;
+      const bBranch=document.getElementById("b-branch").value;
+      if(!aBeast||!aKin||!aBranch||!bBeast||!bKin||!bBranch){ alert("請完整選擇甲乙雙方資料"); return; }
+      showResult("分析中...");
+      runProgress(async ()=>{
+        const res = await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({mode:"double",aBeast,aKin,aBranch,bBeast,bKin,bBranch,context:currentContext})});
+        const data = await res.json();
+        document.getElementById("result-text").innerText=data.text||"無分析結果";
+        drawRadar(data.scores);
+      });
     }
 
-    // 顯示結果 + 雷達圖
-    function showResult(text) {
+    // 顯示結果
+    function showResult(text){
       document.getElementById("result").classList.remove("hidden");
-      document.getElementById("result-text").innerText = text;
+      document.getElementById("result-text").innerText=text;
+    }
 
-      const ctx = document.getElementById("radarChart").getContext("2d");
-      if (chartInstance) chartInstance.destroy();
-      chartInstance = new Chart(ctx, {
-        type: 'radar',
-        data: {
-          labels: ["情感", "事業", "健康", "財運", "智慧"],
-          datasets: [{
-            label: "能量分布",
-            data: Array.from({length:5}, () => Math.floor(Math.random()*10)+1),
-            fill: true
-          }]
-        },
-        options: { responsive: true, scales: { r: { beginAtZero: true, max: 10 } } }
+    // 畫雷達圖
+    function drawRadar(scores){
+      const ctx=document.getElementById("radarChart").getContext("2d");
+      if(chartInstance) chartInstance.destroy();
+      const labels=["情感","事業","健康","財運","智慧"];
+      const values = labels.map(l=> scores && scores[l] ? scores[l] : 0);
+      chartInstance=new Chart(ctx,{
+        type:"radar",
+        data:{labels:labels,
+          datasets:[{label:"能量分布",data:values,fill:true}]},
+        options:{responsive:true,scales:{r:{beginAtZero:true,max:10}}}
       });
     }
 
     // 清除
-    function clearResult() {
+    function clearResult(){
       document.getElementById("result").classList.add("hidden");
-      if (chartInstance) chartInstance.destroy();
+      if(chartInstance) chartInstance.destroy();
     }
   </script>
 </body>
