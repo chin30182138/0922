@@ -19,7 +19,7 @@
 
   <h1 class="text-2xl font-bold text-center text-purple-600">六獸個性預測分析系統</h1>
 
-  <!-- 切換單人 / 雙人 -->
+  <!-- 模式切換 -->
   <div class="flex justify-center gap-4 mt-4">
     <button onclick="setMode('single')" class="px-4 py-2 bg-blue-500 text-white rounded-lg">單人分析</button>
     <button onclick="setMode('dual')" class="px-4 py-2 bg-pink-500 text-white rounded-lg">雙人分析</button>
@@ -74,7 +74,7 @@
     </div>
   </div>
 
-  <!-- 分析類別 -->
+  <!-- 分析按鈕群 -->
   <div class="flex flex-wrap gap-2 justify-center mt-4">
     <button onclick="analyze('職場')" class="px-3 py-2 bg-green-500 text-white rounded-lg">職場分析</button>
     <button onclick="analyze('愛情')" class="px-3 py-2 bg-red-500 text-white rounded-lg">愛情分析</button>
@@ -96,7 +96,7 @@
     <canvas id="radarChart" width="400" height="400"></canvas>
   </div>
 
-  <!-- 控制面板 -->
+  <!-- 顏色設定 -->
   <div class="card">
     <h2 class="text-lg font-bold">介面設定</h2>
     <label>背景顏色：<input type="color" id="bgColor" value="#fdf2f8" onchange="document.body.style.background=this.value"></label><br>
@@ -110,6 +110,13 @@
     <button onclick="downloadPDF()" class="ml-2 px-4 py-2 bg-indigo-500 text-white rounded-lg">下載 PDF</button>
   </div>
 
+  <!-- 存檔管理 -->
+  <div class="card">
+    <h2 class="text-lg font-bold">存檔紀錄</h2>
+    <button onclick="loadRecords()" class="px-3 py-2 bg-gray-500 text-white rounded">載入紀錄</button>
+    <div id="recordList" class="mt-2 space-y-1"></div>
+  </div>
+
   <script>
     let mode = "single";
     let radarChart;
@@ -120,12 +127,10 @@
     }
 
     async function analyze(context) {
-      document.getElementById("progressBar").style.width = "0%";
-      document.getElementById("progressBar").innerText = "0%";
-      setTimeout(() => {
-        document.getElementById("progressBar").style.width = "100%";
-        document.getElementById("progressBar").innerText = "100%";
-      }, 200);
+      // reset progress
+      const bar = document.getElementById("progressBar");
+      bar.style.width = "0%"; bar.innerText = "0%";
+      setTimeout(() => { bar.style.width = "100%"; bar.innerText = "100%"; }, 200);
 
       const body = {
         mode,
@@ -146,6 +151,7 @@
 
       document.getElementById("analysisResult").innerHTML = data.text.replace(/\n/g, "<br>");
       updateRadarChart(data.radar);
+      saveRecord(data);
     }
 
     function updateRadarChart(scores) {
@@ -164,7 +170,7 @@
           }]
         },
         options: {
-          scales: { r: { min: 0, max: 10, ticks: { stepSize: 1, font: { size: 14 } } } }
+          scales: { r: { min: 0, max: 10, ticks: { stepSize: 1, font: { size: 16 } } } }
         }
       });
     }
@@ -182,6 +188,29 @@
       const element = document.body;
       const opt = { margin: 0.5, filename: name + ".pdf", image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: "in", format: "a4", orientation: "portrait" } };
       html2pdf().set(opt).from(element).save();
+    }
+
+    // ====== 存檔功能 ======
+    function saveRecord(data) {
+      let records = JSON.parse(localStorage.getItem("analysisRecords") || "[]");
+      records.push(data);
+      localStorage.setItem("analysisRecords", JSON.stringify(records));
+    }
+
+    function loadRecords() {
+      let records = JSON.parse(localStorage.getItem("analysisRecords") || "[]");
+      let list = document.getElementById("recordList");
+      list.innerHTML = "";
+      records.forEach((r, i) => {
+        let btn = document.createElement("button");
+        btn.innerText = `${i+1}. ${r.meta.context} (${r.meta.timestamp})`;
+        btn.className = "block w-full text-left px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded";
+        btn.onclick = () => {
+          document.getElementById("analysisResult").innerHTML = r.text.replace(/\n/g,"<br>");
+          updateRadarChart(r.radar);
+        };
+        list.appendChild(btn);
+      });
     }
   </script>
 </body>
