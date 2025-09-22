@@ -8,17 +8,25 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-gradient-to-br from-pink-50 to-purple-50 min-h-screen p-6">
 
-  <!-- 標題 -->
   <h1 class="text-3xl font-bold text-center mb-6 text-purple-700">仙人指路六獸個性分析系統</h1>
 
-  <!-- 輸入區 -->
+  <!-- 基本輸入 -->
   <div class="bg-white rounded-xl shadow p-6 mb-6 space-y-4">
     <div>
-      <label class="font-bold text-lg">輸入姓名：</label>
+      <label class="font-bold text-lg">姓名：</label>
       <input id="userName" class="border p-2 rounded w-full" placeholder="例如：林大明" />
+    </div>
+    <div>
+      <label class="font-bold text-lg">解析人屬名：</label>
+      <input id="interpreter" class="border p-2 rounded w-full" placeholder="例如：阿青師" />
+    </div>
+    <div>
+      <label class="font-bold text-lg">自訂網址（可選）：</label>
+      <input id="qrUrl" class="border p-2 rounded w-full" placeholder="https://www.facebook.com/chin168888/" />
     </div>
     <div class="grid grid-cols-3 gap-4">
       <div>
@@ -52,8 +60,6 @@
     <button onclick="analyze('career')" class="bg-green-500 text-white px-4 py-2 rounded-lg">職場篇</button>
     <button onclick="analyze('love')" class="bg-pink-500 text-white px-4 py-2 rounded-lg">愛情篇</button>
     <button onclick="analyze('sex')" class="bg-red-500 text-white px-4 py-2 rounded-lg">性愛篇</button>
-    <button onclick="saveResult()" class="bg-purple-500 text-white px-4 py-2 rounded-lg">存檔</button>
-    <button onclick="loadResult()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg">載入</button>
     <button onclick="exportPDF()" class="bg-gray-700 text-white px-4 py-2 rounded-lg">下載 PDF</button>
     <button onclick="window.print()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg">列印</button>
   </div>
@@ -70,6 +76,8 @@
   <div class="mt-6 bg-white rounded-xl shadow p-6">
     <canvas id="radarChart"></canvas>
   </div>
+
+  <div id="qrcode" class="flex justify-center mt-6"></div>
 
   <script src="analyze.js"></script>
 </body>
