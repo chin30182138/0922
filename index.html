@@ -1,181 +1,89 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>仙人指路六獸個性分析</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>仙人指路六獸個性分析系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <style>
+    body { background: #f9fafb; color:#1f2937; font-family: "Noto Sans TC", sans-serif; }
+    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .progress { height: 20px; border-radius: 10px; overflow: hidden; }
+    .progress-bar { height: 100%; width: 0; transition: width 1s ease-in-out; }
+    #analysisOutput { white-space: pre-line; }
+    .section-title { font-size: 18px; font-weight: bold; margin-top: 16px; }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-pink-50 to-purple-50 min-h-screen p-6">
+<body class="p-6">
+  <div class="max-w-5xl mx-auto space-y-6">
+    <h1 class="text-3xl font-bold text-center text-indigo-600">仙人指路 六獸個性分析系統</h1>
 
-  <h1 class="text-3xl font-bold text-center mb-6 text-purple-700">仙人指路六獸個性分析系統</h1>
+    <!-- 分析模式 -->
+    <div class="card">
+      <h2 class="section-title">分析模式</h2>
+      <div class="flex gap-4">
+        <button onclick="setMode('single')" class="px-4 py-2 bg-indigo-500 text-white rounded">單人分析</button>
+        <button onclick="setMode('double')" class="px-4 py-2 bg-pink-500 text-white rounded">雙人分析</button>
+      </div>
+    </div>
 
-  <!-- 基本輸入 -->
-  <div class="bg-white rounded-xl shadow p-6 mb-6 space-y-4">
-    <div>
-      <label class="font-bold text-lg">姓名：</label>
-      <input id="userName" class="border p-2 rounded w-full" placeholder="例如：林大明" />
-    </div>
-    <div>
-      <label class="font-bold text-lg">解析人屬名：</label>
-      <input id="interpreter" class="border p-2 rounded w-full" />
-    </div>
-    <div>
-      <label class="font-bold text-lg">自訂網址：</label>
-      <input id="qrUrl" class="border p-2 rounded w-full" />
-    </div>
-    <button onclick="saveSettings()" class="bg-green-600 text-white px-4 py-2 rounded-lg mt-2">存檔設定</button>
-  </div>
+    <!-- 單人/雙人輸入區 -->
+    <div id="inputArea" class="card space-y-4"></div>
 
-  <!-- 模式切換 -->
-  <div class="flex justify-center mb-6">
-    <button onclick="toggleMode('single')" id="btnSingle" class="bg-blue-500 text-white px-4 py-2 rounded-l-lg">單人模式</button>
-    <button onclick="toggleMode('double')" id="btnDouble" class="bg-gray-300 text-black px-4 py-2 rounded-r-lg">雙人模式</button>
-  </div>
+    <!-- 情境選擇 -->
+    <div class="card">
+      <h2 class="section-title">情境選擇</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <button onclick="startAnalysis('personality')" class="bg-blue-500 text-white p-2 rounded">個性分析</button>
+        <button onclick="startAnalysis('career')" class="bg-green-500 text-white p-2 rounded">職場分析</button>
+        <button onclick="startAnalysis('love')" class="bg-pink-500 text-white p-2 rounded">愛情分析</button>
+        <button onclick="startAnalysis('sex')" class="bg-red-500 text-white p-2 rounded">性愛分析</button>
+      </div>
+    </div>
 
-  <!-- 單人選單 -->
-  <div id="singleInputs" class="grid grid-cols-3 gap-4 mb-6">
-    <div>
-      <label class="font-bold text-lg">六親：</label>
-      <select id="kin1" class="border p-2 rounded w-full text-blue-700 font-bold">
-        <option>父母</option><option>兄弟</option><option>子孫</option>
-        <option>妻財</option><option>官鬼</option>
-      </select>
+    <!-- 進度條 -->
+    <div class="card">
+      <h2 class="section-title">分析進度</h2>
+      <div class="progress bg-gray-200">
+        <div id="progressBar" class="progress-bar bg-indigo-500"></div>
+      </div>
+      <div id="progressText" class="text-sm mt-1 text-gray-700">0%</div>
     </div>
-    <div>
-      <label class="font-bold text-lg">六獸：</label>
-      <select id="beast1" class="border p-2 rounded w-full text-green-700 font-bold">
-        <option>青龍</option><option>朱雀</option><option>勾陳</option>
-        <option>螣蛇</option><option>白虎</option><option>玄武</option>
-      </select>
-    </div>
-    <div>
-      <label class="font-bold text-lg">地支：</label>
-      <select id="branch1" class="border p-2 rounded w-full text-purple-700 font-bold">
-        <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-        <option>辰</option><option>巳</option><option>午</option><option>未</option>
-        <option>申</option><option>酉</option><option>戌</option><option>亥</option>
-      </select>
-    </div>
-  </div>
 
-  <!-- 雙人選單 -->
-  <div id="doubleInputs" class="grid grid-cols-3 gap-4 mb-6 hidden">
-    <div>
-      <label class="font-bold text-lg">六親(甲)：</label>
-      <select id="kin2" class="border p-2 rounded w-full text-blue-700 font-bold">
-        <option>父母</option><option>兄弟</option><option>子孫</option>
-        <option>妻財</option><option>官鬼</option>
-      </select>
+    <!-- 雷達圖 -->
+    <div class="card">
+      <h2 class="section-title">雷達圖</h2>
+      <canvas id="radarChart" width="400" height="400"></canvas>
     </div>
-    <div>
-      <label class="font-bold text-lg">六獸(甲)：</label>
-      <select id="beast2" class="border p-2 rounded w-full text-green-700 font-bold">
-        <option>青龍</option><option>朱雀</option><option>勾陳</option>
-        <option>螣蛇</option><option>白虎</option><option>玄武</option>
-      </select>
+
+    <!-- 分析輸出 -->
+    <div class="card">
+      <h2 class="section-title">分析結果</h2>
+      <div id="analysisOutput" class="text-gray-800 text-lg leading-relaxed"></div>
     </div>
-    <div>
-      <label class="font-bold text-lg">地支(甲)：</label>
-      <select id="branch2" class="border p-2 rounded w-full text-purple-700 font-bold">
-        <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-        <option>辰</option><option>巳</option><option>午</option><option>未</option>
-        <option>申</option><option>酉</option><option>戌</option><option>亥</option>
-      </select>
+
+    <!-- 列印與PDF -->
+    <div class="card flex gap-4">
+      <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 text-white rounded">🖨 列印</button>
+      <button onclick="downloadPDF()" class="px-4 py-2 bg-pink-600 text-white rounded">📄 下載PDF</button>
+    </div>
+
+    <!-- 屬名人 & 網址 (放最下方) -->
+    <div class="card">
+      <h2 class="section-title">署名與資訊</h2>
+      <label class="block">屬名人：
+        <input id="userName" class="border p-2 rounded w-full" placeholder="輸入屬名人">
+      </label>
+      <label class="block mt-2">網址：
+        <input id="userURL" class="border p-2 rounded w-full" placeholder="輸入網址">
+      </label>
+      <button onclick="saveUserInfo()" class="mt-3 px-4 py-2 bg-green-600 text-white rounded">💾 儲存資訊</button>
     </div>
   </div>
-
-  <!-- 顏色調整 -->
-  <div class="flex gap-6 mb-6 justify-center">
-    <div>
-      <label class="font-bold">背景顏色：</label>
-      <input type="color" id="bgColor" value="#fdf2f8" onchange="changeBackground()" />
-    </div>
-    <div>
-      <label class="font-bold">雷達圖顏色：</label>
-      <input type="color" id="chartColor" value="#9333ea" onchange="updateChartColor()" />
-    </div>
-  </div>
-
-  <!-- 按鈕群 -->
-  <div class="flex flex-wrap gap-3 justify-center mb-6">
-    <button onclick="analyze('personality')" class="bg-blue-500 text-white px-4 py-2 rounded-lg">個性分析</button>
-    <button onclick="analyze('career')" class="bg-green-500 text-white px-4 py-2 rounded-lg">職場篇</button>
-    <button onclick="analyze('love')" class="bg-pink-500 text-white px-4 py-2 rounded-lg">愛情篇</button>
-    <button onclick="analyze('sex')" class="bg-red-500 text-white px-4 py-2 rounded-lg">性愛篇</button>
-    <button onclick="exportPDF()" class="bg-gray-700 text-white px-4 py-2 rounded-lg">下載 PDF</button>
-    <button onclick="window.print()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg">列印</button>
-  </div>
-
-  <!-- 分析結果 -->
-  <div id="result" class="bg-white rounded-xl shadow p-6 text-lg leading-relaxed"></div>
-
-  <!-- 雷達圖 -->
-  <div class="mt-6 bg-white rounded-xl shadow p-6">
-    <canvas id="radarChart"></canvas>
-  </div>
-
-  <!-- QR Code -->
-  <div id="qrcode" class="flex justify-center mt-6"></div>
 
   <script src="analyze.js"></script>
-  <script>
-    // --- 模式切換 ---
-    function toggleMode(mode) {
-      if (mode === "single") {
-        document.getElementById("singleInputs").classList.remove("hidden");
-        document.getElementById("doubleInputs").classList.add("hidden");
-        document.getElementById("btnSingle").classList.add("bg-blue-500","text-white");
-        document.getElementById("btnDouble").classList.remove("bg-blue-500","text-white");
-        document.getElementById("btnDouble").classList.add("bg-gray-300","text-black");
-      } else {
-        document.getElementById("singleInputs").classList.add("hidden");
-        document.getElementById("doubleInputs").classList.remove("hidden");
-        document.getElementById("btnDouble").classList.add("bg-blue-500","text-white");
-        document.getElementById("btnSingle").classList.remove("bg-blue-500","text-white");
-        document.getElementById("btnSingle").classList.add("bg-gray-300","text-black");
-      }
-    }
-
-    // --- 存設定 ---
-    function saveSettings() {
-      const interpreter = document.getElementById("interpreter").value;
-      const qrUrl = document.getElementById("qrUrl").value;
-      localStorage.setItem("interpreter", interpreter);
-      localStorage.setItem("qrUrl", qrUrl);
-      alert("設定已存檔，下次會自動載入！");
-    }
-
-    // --- 載設定 ---
-    window.onload = () => {
-      if (localStorage.getItem("interpreter")) {
-        document.getElementById("interpreter").value = localStorage.getItem("interpreter");
-      } else {
-        document.getElementById("interpreter").value = "阿青師";
-      }
-      if (localStorage.getItem("qrUrl")) {
-        document.getElementById("qrUrl").value = localStorage.getItem("qrUrl");
-      } else {
-        document.getElementById("qrUrl").value = "https://www.facebook.com/chin168888/";
-      }
-    };
-
-    // --- 背景顏色 ---
-    function changeBackground() {
-      document.body.style.backgroundColor = document.getElementById("bgColor").value;
-    }
-
-    // --- 更新雷達圖顏色 ---
-    function updateChartColor() {
-      if (window.radarChart) {
-        const color = document.getElementById("chartColor").value;
-        window.radarChart.data.datasets[0].borderColor = color;
-        window.radarChart.update();
-      }
-    }
-  </script>
 </body>
 </html>
