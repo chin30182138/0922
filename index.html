@@ -14,6 +14,12 @@
   <div class="max-w-6xl mx-auto p-6">
     <h1 class="text-3xl font-bold text-center text-purple-700 mb-6">六獸 AI 分析系統</h1>
 
+    <!-- 姓名 -->
+    <div class="mb-6">
+      <label class="block text-sm font-bold mb-1">姓名</label>
+      <input id="userName" class="w-full border rounded p-2" placeholder="輸入姓名">
+    </div>
+
     <!-- 模式切換 -->
     <div class="flex justify-center gap-4 mb-6">
       <button onclick="switchMode('single')" id="btnSingle" class="px-4 py-2 bg-indigo-500 text-white rounded shadow">單人模式</button>
@@ -25,28 +31,21 @@
       <div class="grid grid-cols-3 gap-4">
         <div>
           <label class="block text-sm font-bold mb-1">六獸</label>
-          <select id="singleBeast" class="w-full border rounded p-2">
-            <option>青龍</option>
-            <option>朱雀</option>
-            <option>勾陳</option>
-            <option>螣蛇</option>
-            <option>白虎</option>
-            <option>玄武</option>
+          <select id="singleBeast" class="w-full border rounded p-2 bg-purple-50 shadow">
+            <option>青龍</option><option>朱雀</option><option>勾陳</option>
+            <option>螣蛇</option><option>白虎</option><option>玄武</option>
           </select>
         </div>
         <div>
           <label class="block text-sm font-bold mb-1">六親</label>
-          <select id="singleKin" class="w-full border rounded p-2">
-            <option>父母</option>
-            <option>兄弟</option>
-            <option>子孫</option>
-            <option>妻財</option>
-            <option>官鬼</option>
+          <select id="singleKin" class="w-full border rounded p-2 bg-purple-50 shadow">
+            <option>父母</option><option>兄弟</option><option>子孫</option>
+            <option>妻財</option><option>官鬼</option>
           </select>
         </div>
         <div>
           <label class="block text-sm font-bold mb-1">地支</label>
-          <select id="singleBranch" class="w-full border rounded p-2">
+          <select id="singleBranch" class="w-full border rounded p-2 bg-purple-50 shadow">
             <option>子</option><option>丑</option><option>寅</option><option>卯</option>
             <option>辰</option><option>巳</option><option>午</option><option>未</option>
             <option>申</option><option>酉</option><option>戌</option><option>亥</option>
@@ -59,13 +58,15 @@
     <div id="dualMode" class="mb-6 hidden">
       <h2 class="font-bold mb-2">角色 A</h2>
       <div class="grid grid-cols-3 gap-4 mb-4">
-        <select id="aBeast" class="border rounded p-2">
-          <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
+        <select id="aBeast" class="border rounded p-2 bg-purple-50 shadow">
+          <option>青龍</option><option>朱雀</option><option>勾陳</option>
+          <option>螣蛇</option><option>白虎</option><option>玄武</option>
         </select>
-        <select id="aKin" class="border rounded p-2">
-          <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
+        <select id="aKin" class="border rounded p-2 bg-purple-50 shadow">
+          <option>父母</option><option>兄弟</option><option>子孫</option>
+          <option>妻財</option><option>官鬼</option>
         </select>
-        <select id="aBranch" class="border rounded p-2">
+        <select id="aBranch" class="border rounded p-2 bg-purple-50 shadow">
           <option>子</option><option>丑</option><option>寅</option><option>卯</option>
           <option>辰</option><option>巳</option><option>午</option><option>未</option>
           <option>申</option><option>酉</option><option>戌</option><option>亥</option>
@@ -73,13 +74,15 @@
       </div>
       <h2 class="font-bold mb-2">角色 B</h2>
       <div class="grid grid-cols-3 gap-4">
-        <select id="bBeast" class="border rounded p-2">
-          <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
+        <select id="bBeast" class="border rounded p-2 bg-purple-50 shadow">
+          <option>青龍</option><option>朱雀</option><option>勾陳</option>
+          <option>螣蛇</option><option>白虎</option><option>玄武</option>
         </select>
-        <select id="bKin" class="border rounded p-2">
-          <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
+        <select id="bKin" class="border rounded p-2 bg-purple-50 shadow">
+          <option>父母</option><option>兄弟</option><option>子孫</option>
+          <option>妻財</option><option>官鬼</option>
         </select>
-        <select id="bBranch" class="border rounded p-2">
+        <select id="bBranch" class="border rounded p-2 bg-purple-50 shadow">
           <option>子</option><option>丑</option><option>寅</option><option>卯</option>
           <option>辰</option><option>巳</option><option>午</option><option>未</option>
           <option>申</option><option>酉</option><option>戌</option><option>亥</option>
@@ -93,6 +96,7 @@
       <button onclick="analyze('愛情')" class="px-4 py-2 bg-pink-500 text-white rounded">愛情分析</button>
       <button onclick="analyze('性愛')" class="px-4 py-2 bg-red-500 text-white rounded">性愛分析</button>
       <button onclick="analyze('個性')" class="px-4 py-2 bg-purple-600 text-white rounded">個性分析</button>
+      <button onclick="loadHistory()" class="px-4 py-2 bg-gray-600 text-white rounded">歷史紀錄</button>
     </div>
 
     <!-- 進度條 -->
@@ -118,7 +122,6 @@
   <script>
     let currentMode = "single";
 
-    // 切換模式
     function switchMode(mode) {
       currentMode = mode;
       document.getElementById("singleMode").classList.toggle("hidden", mode !== "single");
@@ -148,7 +151,7 @@
       }
     });
 
-    // 分析模擬
+    // 呼叫分析 API
     async function analyze(type) {
       const progress = document.getElementById("progressBar");
       let percent = 0;
@@ -159,32 +162,90 @@
 
       document.getElementById("analysisResult").innerHTML = `<p class="text-gray-500">分析中...請稍候</p>`;
 
-      setTimeout(() => {
-        clearInterval(interval);
-        progress.style.width = "100%"; progress.textContent = "100%";
+      let body = { mode: currentMode, context: type };
+      if (currentMode === "single") {
+        body.singleBeast = document.getElementById("singleBeast").value;
+        body.singleKin = document.getElementById("singleKin").value;
+        body.singleBranch = document.getElementById("singleBranch").value;
+      } else {
+        body.aBeast = document.getElementById("aBeast").value;
+        body.aKin = document.getElementById("aKin").value;
+        body.aBranch = document.getElementById("aBranch").value;
+        body.bBeast = document.getElementById("bBeast").value;
+        body.bKin = document.getElementById("bKin").value;
+        body.bBranch = document.getElementById("bBranch").value;
+      }
 
-        document.getElementById("analysisResult").innerHTML = `
-          <h3 class="font-bold text-lg mb-2">${type} 分析結果</h3>
-          <p>這裡會顯示由 AI 生成的完整文字內容，包括六親、六獸、地支的個性特徵描述。</p>
-        `;
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
 
-        // 更新雷達圖數據
+      const result = await response.json();
+      clearInterval(interval);
+      progress.style.width = "100%"; progress.textContent = "100%";
+
+      document.getElementById("analysisResult").innerHTML = `
+        <h3 class="font-bold text-lg mb-2">${type} 分析結果</h3>
+        <p class="text-sm text-gray-600 mb-2">${result.profile}</p>
+        <div>${result.analysis}</div>
+      `;
+
+      if (result.scores) {
         radarChart.data.datasets[0].data = [
-          Math.floor(Math.random()*10),
-          Math.floor(Math.random()*10),
-          Math.floor(Math.random()*10),
-          Math.floor(Math.random()*10),
-          Math.floor(Math.random()*10)
+          result.scores["情感"] ?? 0,
+          result.scores["事業"] ?? 0,
+          result.scores["健康"] ?? 0,
+          result.scores["財運"] ?? 0,
+          result.scores["智慧"] ?? 0
         ];
         radarChart.update();
-      }, 2000);
+      }
+
+      saveRecord(type, result);
     }
 
-    // PDF 下載
+    function saveRecord(type, result) {
+      const history = JSON.parse(localStorage.getItem("analysisHistory") || "[]");
+      history.push({
+        time: new Date().toLocaleString(),
+        name: document.getElementById("userName").value,
+        type,
+        profile: result.profile,
+        analysis: result.analysis,
+        scores: result.scores
+      });
+      localStorage.setItem("analysisHistory", JSON.stringify(history));
+    }
+
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem("analysisHistory") || "[]");
+      let html = "<h3 class='font-bold mb-2'>歷史紀錄</h3><ul class='list-disc pl-5'>";
+      history.forEach((h, i) => {
+        html += `<li><button class="text-blue-600 underline" onclick="showHistory(${i})">${h.time} - ${h.name || ""} ${h.type}</button></li>`;
+      });
+      html += "</ul>";
+      document.getElementById("analysisResult").innerHTML = html;
+    }
+
+    function showHistory(i) {
+      const history = JSON.parse(localStorage.getItem("analysisHistory") || "[]");
+      const h = history[i];
+      document.getElementById("analysisResult").innerHTML = `
+        <h3 class="font-bold text-lg mb-2">${h.type} 分析結果</h3>
+        <p class="text-sm text-gray-600 mb-2">${h.profile}</p>
+        <div>${h.analysis}</div>
+      `;
+      radarChart.data.datasets[0].data = [
+        h.scores["情感"], h.scores["事業"], h.scores["健康"], h.scores["財運"], h.scores["智慧"]
+      ];
+      radarChart.update();
+    }
+
     async function downloadPDF() {
       const { jsPDF } = window.jspdf;
-      let filename = prompt("請輸入檔名：", "六獸分析.pdf");
-      if (!filename.endsWith(".pdf")) filename += ".pdf";
+      let filename = prompt("請輸入檔名：", document.getElementById("userName").value || "六獸分析") + ".pdf";
 
       const doc = new jsPDF("p", "mm", "a4");
       const analysis = document.getElementById("analysisResult");
