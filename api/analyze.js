@@ -1,19 +1,12 @@
-// ==========================
-// analyze.js
-// ==========================
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ error: "missing_env", detail: "OPENAI_API_KEY not set" });
-    }
-
     const { mode, aBeast, aKin, aBranch, bBeast, bKin, bBranch, context } = req.body ?? {};
 
-    // 個性特徵庫
+    // ===== 特徵庫 =====
     const beastTraits = {
       "青龍": "靈活多變、反應迅速，喜歡挑戰與創新。",
       "朱雀": "表達力強、情感外放，容易感染周圍的人。",
@@ -46,12 +39,11 @@ export default async function handler(req, res) {
       "亥": "心性溫和，富於同理，但意志不夠堅定。"
     };
 
-    // 組合角色個性描述
     function getPersonality(beast, kin, branch) {
-      return `${beast}：${beastTraits[beast]}\n${kin}：${kinTraits[kin]}\n${branch}：${branchTraits[branch]}`;
+      return `${beast}：${beastTraits[beast] ?? ""}\n${kin}：${kinTraits[kin] ?? ""}\n${branch}：${branchTraits[branch] ?? ""}`;
     }
 
-    // 分析格式
+    // ===== 分析結果格式 =====
     let output = "";
     if (context === "職場") {
       output = `
@@ -61,13 +53,12 @@ ${getPersonality(aBeast, aKin, aBranch)}
 
 ${mode === "dual" ? `➤ 對手特質：\n${getPersonality(bBeast, bKin, bBranch)}` : ""}
 
-互動模式解析：
-- 上司傾向：權威／規劃／決斷
-- 下屬傾向：執行／應變／服從
+互動模式：
+- 上司重視效率，下屬偏向算計，互信度需加強。
 
 📌 建議：
-1. 避免正面衝突，善用互補優勢。
-2. 建立清晰的責任分工。
+1. 建立清晰分工。
+2. 定期策略會議，避免誤解。
       `;
     } else if (context === "愛情") {
       output = `
@@ -81,9 +72,7 @@ ${mode === "dual" ? `➤ 對象特質：\n${getPersonality(bBeast, bKin, bBranch
 - 情愛指數：${Math.floor(Math.random()*3)+7}/10
 - 默契指數：${Math.floor(Math.random()*3)+6}/10
 
-📌 建議：
-1. 多用真誠溝通化解誤會。
-2. 情感中避免猜忌與冷漠。
+📌 建議：多點耐心與真誠溝通。
       `;
     } else if (context === "性愛") {
       output = `
@@ -93,13 +82,13 @@ ${getPersonality(aBeast, aKin, aBranch)}
 
 ${mode === "dual" ? `➤ 對象特質：\n${getPersonality(bBeast, bKin, bBranch)}` : ""}
 
-互動模式：
+激情互動：
 - 激情指數：${Math.floor(Math.random()*3)+7}/10
 - 和諧指數：${Math.floor(Math.random()*3)+6}/10
 
 推薦體位：
-- ${["女上位","後入式","側身交纏","坐姿交疊"][Math.floor(Math.random()*4)]}
-- ${["站立擁抱","反向騎乘","交錯並腿","床邊支撐"][Math.floor(Math.random()*4)]}
+- ${["女上位","後入式","側身交纏","反向騎乘"][Math.floor(Math.random()*4)]}
+- ${["站立擁抱","床邊支撐","交錯並腿","騎乘變化"][Math.floor(Math.random()*4)]}
       `;
     } else if (context === "個性") {
       output = `
@@ -107,9 +96,8 @@ ${mode === "dual" ? `➤ 對象特質：\n${getPersonality(bBeast, bKin, bBranch
 角色特質：
 ${getPersonality(aBeast, aKin, aBranch)}
 
-🔑 核心性格：
-- 優點：堅毅 / 創意 / 感性
-- 弱點：固執 / 過度情緒化
+🔑 優點：堅毅、創新、感性  
+❗ 缺點：固執、情緒化  
 
 📌 建議：
 - 在適合的領域發揮長處。
@@ -117,7 +105,7 @@ ${getPersonality(aBeast, aKin, aBranch)}
       `;
     }
 
-    // 回傳 JSON + 雷達圖數據
+    // ===== 雷達圖數據 =====
     const radarData = {
       "情感": Math.floor(Math.random() * 10) + 1,
       "事業": Math.floor(Math.random() * 10) + 1,
@@ -126,9 +114,17 @@ ${getPersonality(aBeast, aKin, aBranch)}
       "智慧": Math.floor(Math.random() * 10) + 1
     };
 
+    // ===== 回傳結果 =====
     res.status(200).json({
       text: output,
-      radar: radarData
+      radar: radarData,
+      meta: {
+        mode,
+        aBeast, aKin, aBranch,
+        bBeast, bKin, bBranch,
+        context,
+        timestamp: new Date().toISOString()
+      }
     });
 
   } catch (err) {
