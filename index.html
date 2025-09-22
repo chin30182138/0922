@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>六獸分析系統</title>
+  <title>六獸 AI 分析系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 text-gray-800 transition-colors duration-300">
 
-  <div class="max-w-4xl mx-auto p-6">
+  <div class="max-w-5xl mx-auto p-6">
     <h1 class="text-3xl font-bold text-center text-purple-700 mb-6">六獸 AI 分析系統</h1>
 
     <!-- 顏色控制 -->
-    <div class="flex gap-4 mb-6">
+    <div class="flex gap-6 mb-6 flex-wrap">
       <div>
         <label class="block text-sm font-medium">雷達圖顏色</label>
         <select id="colorSelect" class="mt-1 p-2 border rounded">
@@ -31,17 +31,18 @@
     </div>
 
     <!-- 分析按鈕 -->
-    <div class="flex gap-4 mb-6">
+    <div class="flex gap-4 mb-6 flex-wrap">
       <button onclick="analyze('職場')" class="px-4 py-2 bg-blue-500 text-white rounded">職場分析</button>
       <button onclick="analyze('愛情')" class="px-4 py-2 bg-pink-500 text-white rounded">愛情分析</button>
       <button onclick="analyze('性愛')" class="px-4 py-2 bg-red-500 text-white rounded">性愛分析</button>
+      <button onclick="analyze('個性')" class="px-4 py-2 bg-purple-600 text-white rounded">個性分析</button>
     </div>
 
     <!-- 分析內容 -->
-    <div id="analysisResult" class="bg-white shadow rounded p-4 mb-6"></div>
+    <div id="analysisResult" class="bg-white shadow rounded p-6 mb-6 min-h-[200px]"></div>
 
     <!-- 雷達圖 -->
-    <div class="bg-white shadow rounded p-4">
+    <div class="bg-white shadow rounded p-6">
       <canvas id="radarChart"></canvas>
     </div>
 
@@ -75,7 +76,7 @@
       }
     });
 
-    // 改顏色
+    // 改雷達圖顏色
     document.getElementById("colorSelect").addEventListener("change", (e) => {
       const color = e.target.value;
       radarChart.data.datasets[0].backgroundColor = color;
@@ -83,16 +84,15 @@
       radarChart.update();
     });
 
-    // 改背景
+    // 改背景顏色
     document.getElementById("bgPicker").addEventListener("input", (e) => {
       document.body.style.background = e.target.value;
     });
 
-    // 模擬 API 回傳
+    // 呼叫 API
     async function analyze(type) {
       document.getElementById("analysisResult").innerHTML = `<p class="text-gray-500">分析中...請稍候</p>`;
       
-      // 模擬 API 回傳
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -100,10 +100,9 @@
       });
       const data = await response.json();
 
-      // 套用結果
       document.getElementById("analysisResult").innerHTML = data.text;
 
-      // 更新雷達圖
+      // 更新雷達圖數據
       radarChart.data.datasets[0].data = [
         data.scores["情感"],
         data.scores["事業"],
