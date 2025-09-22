@@ -1,50 +1,91 @@
+// ==========================
+// 檔案：api/analyze.js
+// ==========================
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
-  }
-
-  const { mode, aBeast, aKin, aBranch, bBeast, bKin, bBranch, context } = req.body;
-
-  // 基本分析文字（你可以再加上卦理內容）
-  let analysisText = `🔮 ${context} 分析：${aBeast}(${aKin}, ${aBranch})`;
-  if (mode === "dual") {
-    analysisText += ` 與 ${bBeast}(${bKin}, ${bBranch}) 的互動。`;
-  }
-
-  let healthTips = "";
-
-  // 健康情境 → 湯藥建議
-  if (context === "健康") {
-    if (["子", "亥"].includes(aBranch)) {
-      healthTips = "💡 健康湯藥建議：腎水偏弱，可考慮安迪湯、六味地黃丸、右歸飲、知柏地黃丸。";
-    } else if (["寅", "卯"].includes(aBranch)) {
-      healthTips = "💡 健康湯藥建議：肝木不足，可用逍遙散、加味逍遙散、四神湯、柴胡疏肝散。";
-    } else if (["巳", "午"].includes(aBranch)) {
-      healthTips = "💡 健康湯藥建議：心火過旺，可用酸棗仁湯、清心蓮子飲、天王補心丹、朱砂安神丸。";
-    } else if (["申", "酉"].includes(aBranch)) {
-      healthTips = "💡 健康湯藥建議：肺金偏弱，可用桑菊飲、銀翹散、百合固金湯、麥門冬湯。";
-    } else if (["丑","辰","未","戌"].includes(aBranch)) {
-      healthTips = "💡 健康湯藥建議：脾土不足，可用補中益氣湯、香砂六君子湯、四君子湯、參苓白朮散。";
+  try {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
     }
-  }
 
-  // 雙人模式 → 模擬互動分數
-  let scores = null;
-  if (mode === "dual") {
-    scores = {
-      fit: Math.floor(Math.random() * 10) + 1,
-      comm: Math.floor(Math.random() * 10) + 1,
-      pace: Math.floor(Math.random() * 10) + 1,
-      account: Math.floor(Math.random() * 10) + 1,
-      trust: Math.floor(Math.random() * 10) + 1,
-      innov: Math.floor(Math.random() * 10) + 1,
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
+    }
+
+    const { mode, aBeast, aKin, aBranch, bBeast, bKin, bBranch, context } = req.body ?? {};
+
+    // 組合提示詞
+    let prompt = "";
+    if (mode === "single") {
+      prompt = `請根據以下資訊進行分析：
+六獸：${aBeast}
+六親：${aKin}
+地支：${aBranch}
+情境：${context}
+
+請輸出一段文字說明，並給五個分數 (情感、事業、健康、財運、智慧)，每個 0~10。`;
+    } else {
+      prompt = `請根據以下雙人資訊進行分析：
+甲方：${aBeast} × ${aKin} × ${aBranch}
+乙方：${bBeast} × ${bKin} × ${bBranch}
+情境：${context}
+
+請輸出一段文字說明，並給五個分數 (情感、事業、健康、財運、智慧)，每個 0~10。`;
+    }
+
+    // 呼叫 OpenAI API
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7
+      })
+    });
+
+    const data = await response.json();
+
+    // 抓 GPT 輸出
+    const rawText = data.choices?.[0]?.message?.content || "無法生成分析";
+
+    // 嘗試解析分數（假設 GPT 輸出 JSON 格式）
+    let scores = {
+      情感: 0,
+      事業: 0,
+      健康: 0,
+      財運: 0,
+      智慧: 0
     };
-  }
 
-  return res.status(200).json({
-    text: analysisText,
-    healthTips,
-    scores
-  });
+    try {
+      const match = rawText.match(/\{[\s\S]*\}/); // 嘗試抓 JSON
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        scores = { ...scores, ...parsed };
+      }
+    } catch (e) {
+      console.warn("JSON 解析失敗，使用預設分數");
+      // 如果 GPT 沒給 JSON，就給隨機分數
+      scores = {
+        情感: Math.floor(Math.random() * 10) + 1,
+        事業: Math.floor(Math.random() * 10) + 1,
+        健康: Math.floor(Math.random() * 10) + 1,
+        財運: Math.floor(Math.random() * 10) + 1,
+        智慧: Math.floor(Math.random() * 10) + 1
+      };
+    }
+
+    return res.status(200).json({
+      text: rawText,
+      scores
+    });
+
+  } catch (err) {
+    console.error("Analyze API Error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 }
