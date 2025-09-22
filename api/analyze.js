@@ -1,44 +1,144 @@
-export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+async function analyze(data) {
+  try {
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (e) {
+    console.error("分析失敗", e);
+    return { analysis: "⚠ 系統錯誤，請再試一次。", radar: {}, quote: "保持信心，一切都會更好。" };
+  }
+}
 
-  const { mode, kin, beast, branch, userName, interpreter, qrUrl } = req.body;
-
-  let prompt = "";
-
-  if (mode === "career") {
-    prompt = `
-🐉 ${beast}${branch} 上司 VS ${kin} 下屬
-雙層角色設定、互動模式、高危衝突點、應對策略、情境對話、避坑提醒。
-最後請加一句正向金句。`;
-  } else if (mode === "sex") {
-    prompt = `
-${beast}${branch} X ${kin} 的性愛分析：
-情愛指數、互動模式、雷點、劇本、體位、技巧、道具、場景。
-最後請加一句正向金句。`;
-  } else if (mode === "love") {
-    prompt = `
-${beast}${branch} X ${kin} 的愛情分析：
-戀愛氛圍、情感互動、默契養成、長期發展。
-最後請加一句正向金句。`;
+let mode = "single";
+function setMode(m) {
+  mode = m;
+  const inputArea = document.getElementById("inputArea");
+  inputArea.innerHTML = "";
+  if (m === "single") {
+    inputArea.innerHTML = singleInput("A");
   } else {
-    prompt = `
-${beast}${kin}${branch} 的個性分析：
-六獸特質、六親特質、地支特質、綜合優勢、挑戰、人際互動。
-最後請加一句正向金句。`;
+    inputArea.innerHTML = singleInput("A") + "<hr class='my-3'/>" + singleInput("B");
+  }
+}
+
+function singleInput(label) {
+  return `
+  <div>
+    <h3 class="font-bold">${label} 人資料</h3>
+    <select id="kin${label}" class="border p-2 rounded">
+      <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
+    </select>
+    <select id="beast${label}" class="border p-2 rounded ml-2">
+      <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
+    </select>
+    <select id="branch${label}" class="border p-2 rounded ml-2">
+      <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+      <option>辰</option><option>巳</option><option>午</option><option>未</option>
+      <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+    </select>
+  </div>`;
+}
+
+async function startAnalysis(type) {
+  document.getElementById("analysisOutput").innerText = "";
+  updateProgress(0);
+
+  const payload = { type, mode };
+  if (mode === "single") {
+    payload.aKin = document.getElementById("kinA").value;
+    payload.aBeast = document.getElementById("beastA").value;
+    payload.aBranch = document.getElementById("branchA").value;
+  } else {
+    payload.aKin = document.getElementById("kinA").value;
+    payload.aBeast = document.getElementById("beastA").value;
+    payload.aBranch = document.getElementById("branchA").value;
+    payload.bKin = document.getElementById("kinB").value;
+    payload.bBeast = document.getElementById("beastB").value;
+    payload.bBranch = document.getElementById("branchB").value;
   }
 
-  // ⚠️ 模擬回傳，請換成 OpenAI API
-  const mockText = `
-這是 ${mode} 的完整分析內容，針對 ${beast}${branch} 與 ${kin}。
-**正向金句：**「堅定前行，你的智慧就是最強的指南針。」`;
+  let percent = 0;
+  const interval = setInterval(() => {
+    percent += 10;
+    if (percent > 100) { clearInterval(interval); return; }
+    updateProgress(percent);
+  }, 200);
 
-  const mockJson = { 情感: 8, 事業: 7, 健康: 6, 財運: 9, 智慧: 8 };
+  const result = await analyze(payload);
+  clearInterval(interval);
+  updateProgress(100);
 
-  res.status(200).json({
-    text: mockText,
-    scores: mockJson,
-    userName,
-    interpreter,
-    qrUrl
+  renderRadar(result.radar);
+  document.getElementById("analysisOutput").innerHTML =
+    result.analysis + "<br><br><b style='font-size:20px;'>" + result.quote + "</b>";
+}
+
+function updateProgress(p) {
+  document.getElementById("progressBar").style.width = p + "%";
+  document.getElementById("progressText").innerText = p + "%";
+}
+
+let radarChart;
+function renderRadar(data) {
+  const ctx = document.getElementById("radarChart").getContext("2d");
+  if (radarChart) radarChart.destroy();
+  radarChart = new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels: Object.keys(data),
+      datasets: [{
+        label: "分析分數",
+        data: Object.values(data),
+        backgroundColor: "rgba(79,70,229,0.3)",
+        borderColor: "rgba(79,70,229,1)",
+        pointBackgroundColor: "rgba(79,70,229,1)"
+      }]
+    },
+    options: { scales: { r: { suggestedMin: 0, suggestedMax: 100 } } }
   });
+}
+
+function saveUserInfo() {
+  localStorage.setItem("userName", document.getElementById("userName").value);
+  localStorage.setItem("userURL", document.getElementById("userURL").value);
+  alert("已儲存，下次會自動載入。");
+}
+function loadUserInfo() {
+  document.getElementById("userName").value = localStorage.getItem("userName") || "阿青師";
+  document.getElementById("userURL").value = localStorage.getItem("userURL") || "https://www.facebook.com/chin168888/";
+}
+window.onload = loadUserInfo;
+
+async function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text("六獸個性分析報告", 20, 20);
+
+  const userName = document.getElementById("userName").value;
+  const userURL = document.getElementById("userURL").value;
+
+  doc.setFontSize(12);
+  doc.text("屬名人：" + userName, 20, 35);
+  doc.text("網址：" + userURL, 20, 45);
+
+  const canvas = document.getElementById("radarChart");
+  const imgData = canvas.toDataURL("image/png");
+  doc.addImage(imgData, "PNG", 20, 60, 160, 160);
+
+  const text = document.getElementById("analysisOutput").innerText;
+  doc.text(text, 20, 230, { maxWidth: 170 });
+
+  const qrCanvas = document.createElement("canvas");
+  await QRCode.toCanvas(qrCanvas, userURL);
+  const qrImg = qrCanvas.toDataURL("image/png");
+  doc.addImage(qrImg, "PNG", 150, 20, 40, 40);
+
+  doc.setFontSize(10);
+  doc.text("軟體製作人：仙人指路占卜研究學會阿青師", 20, 280);
+
+  doc.save("六獸個性分析.pdf");
 }
