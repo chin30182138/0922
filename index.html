@@ -1,120 +1,143 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>仙人指路 六獸個性分析</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    body { background: linear-gradient(to right, #fdf2f8, #ede9fe); font-family: "Microsoft JhengHei", sans-serif; }
-    .card { background: #fff; border-radius: 1rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 1.5rem; margin-top: 1rem; }
-    .progress { height: 16px; border-radius: 9999px; overflow: hidden; background: #e5e7eb; }
-    .progress-bar { height: 100%; width: 0%; transition: width 2s ease-in-out; text-align: right; color: #fff; padding-right: 5px; font-size: 12px; }
-    select { border: 1px solid #ccc; padding: 4px 6px; border-radius: 6px; }
+    @media print {
+      @page { margin: 14mm; }
+      .no-print { display:none !important; }
+      body { background:#fff !important; }
+    }
   </style>
 </head>
-<body class="p-6">
+<body class="bg-gray-100 text-gray-900">
+  <div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-4">🔮 仙人指路 六獸個性分析系統</h1>
 
-  <h1 class="text-2xl font-bold text-center text-purple-600">六獸個性預測分析系統</h1>
+    <!-- 模式切換 -->
+    <div class="mb-4">
+      <button onclick="setMode('single')" class="px-4 py-2 bg-indigo-500 text-white rounded">單人分析</button>
+      <button onclick="setMode('dual')" class="px-4 py-2 bg-pink-500 text-white rounded">雙人分析</button>
+    </div>
 
-  <!-- 模式切換 -->
-  <div class="flex justify-center gap-4 mt-4">
-    <button onclick="setMode('single')" class="px-4 py-2 bg-blue-500 text-white rounded-lg">單人分析</button>
-    <button onclick="setMode('dual')" class="px-4 py-2 bg-pink-500 text-white rounded-lg">雙人分析</button>
-  </div>
-
-  <!-- 六親六獸地支選單 -->
-  <div id="inputArea" class="card">
-    <h2 class="text-lg font-bold text-gray-700 mb-2">角色設定</h2>
-    <div id="singleInput" class="space-y-2">
-      <label>六獸：
-        <select id="aBeast">
+    <!-- 單人輸入 -->
+    <div id="singleInput" class="grid grid-cols-3 gap-4 mb-4">
+      <div>
+        <label class="block text-lg font-semibold">六獸</label>
+        <select id="aBeast" class="w-full border p-2 text-lg">
           <option>青龍</option><option>朱雀</option><option>勾陳</option>
           <option>螣蛇</option><option>白虎</option><option>玄武</option>
         </select>
-      </label>
-      <label>六親：
-        <select id="aKin">
+      </div>
+      <div>
+        <label class="block text-lg font-semibold">六親</label>
+        <select id="aKin" class="w-full border p-2 text-lg">
           <option>父母</option><option>兄弟</option><option>子孫</option>
           <option>妻財</option><option>官鬼</option>
         </select>
-      </label>
-      <label>地支：
-        <select id="aBranch">
+      </div>
+      <div>
+        <label class="block text-lg font-semibold">地支</label>
+        <select id="aBranch" class="w-full border p-2 text-lg">
           <option>子</option><option>丑</option><option>寅</option><option>卯</option>
           <option>辰</option><option>巳</option><option>午</option><option>未</option>
           <option>申</option><option>酉</option><option>戌</option><option>亥</option>
         </select>
-      </label>
+      </div>
     </div>
 
-    <div id="dualInput" class="hidden space-y-2 mt-4">
-      <h3 class="font-bold">對手角色設定</h3>
-      <label>六獸：
-        <select id="bBeast">
+    <!-- 雙人輸入 -->
+    <div id="dualInput" class="grid grid-cols-6 gap-4 mb-4 hidden">
+      <div>
+        <label class="block text-lg font-semibold">甲 六獸</label>
+        <select id="aBeastDual" class="w-full border p-2 text-lg">
           <option>青龍</option><option>朱雀</option><option>勾陳</option>
           <option>螣蛇</option><option>白虎</option><option>玄武</option>
         </select>
-      </label>
-      <label>六親：
-        <select id="bKin">
+      </div>
+      <div>
+        <label class="block text-lg font-semibold">甲 六親</label>
+        <select id="aKinDual" class="w-full border p-2 text-lg">
           <option>父母</option><option>兄弟</option><option>子孫</option>
           <option>妻財</option><option>官鬼</option>
         </select>
-      </label>
-      <label>地支：
-        <select id="bBranch">
+      </div>
+      <div>
+        <label class="block text-lg font-semibold">甲 地支</label>
+        <select id="aBranchDual" class="w-full border p-2 text-lg">
           <option>子</option><option>丑</option><option>寅</option><option>卯</option>
           <option>辰</option><option>巳</option><option>午</option><option>未</option>
           <option>申</option><option>酉</option><option>戌</option><option>亥</option>
         </select>
-      </label>
+      </div>
+      <div>
+        <label class="block text-lg font-semibold">乙 六獸</label>
+        <select id="bBeastDual" class="w-full border p-2 text-lg">
+          <option>青龍</option><option>朱雀</option><option>勾陳</option>
+          <option>螣蛇</option><option>白虎</option><option>玄武</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-lg font-semibold">乙 六親</label>
+        <select id="bKinDual" class="w-full border p-2 text-lg">
+          <option>父母</option><option>兄弟</option><option>子孫</option>
+          <option>妻財</option><option>官鬼</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-lg font-semibold">乙 地支</label>
+        <select id="bBranchDual" class="w-full border p-2 text-lg">
+          <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+          <option>辰</option><option>巳</option><option>午</option><option>未</option>
+          <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+        </select>
+      </div>
     </div>
-  </div>
 
-  <!-- 分析按鈕群 -->
-  <div class="flex flex-wrap gap-2 justify-center mt-4">
-    <button onclick="analyze('職場')" class="px-3 py-2 bg-green-500 text-white rounded-lg">職場分析</button>
-    <button onclick="analyze('愛情')" class="px-3 py-2 bg-red-500 text-white rounded-lg">愛情分析</button>
-    <button onclick="analyze('性愛')" class="px-3 py-2 bg-pink-600 text-white rounded-lg">性愛分析</button>
-    <button onclick="analyze('個性')" class="px-3 py-2 bg-purple-500 text-white rounded-lg">個性分析</button>
-  </div>
+    <!-- 操作按鈕 -->
+    <div class="flex flex-wrap gap-4 mb-6 no-print">
+      <button onclick="runAnalysis('career')" class="px-4 py-2 bg-green-500 text-white rounded">職場分析</button>
+      <button onclick="runAnalysis('love')" class="px-4 py-2 bg-pink-500 text-white rounded">愛情分析</button>
+      <button onclick="runAnalysis('sex')" class="px-4 py-2 bg-red-500 text-white rounded">性愛分析</button>
+      <button onclick="runAnalysis('personality')" class="px-4 py-2 bg-indigo-500 text-white rounded">個性分析</button>
 
-  <!-- 進度條 -->
-  <div class="progress mt-6">
-    <div id="progressBar" class="progress-bar bg-gradient-to-r from-purple-400 to-pink-500">0%</div>
-  </div>
+      <!-- 列印 & PDF -->
+      <button onclick="window.print()" class="px-4 py-2 bg-gray-600 text-white rounded">🖨 列印</button>
+      <input type="text" id="pdfName" placeholder="輸入檔名" class="border p-2 rounded"/>
+      <button onclick="downloadPDF()" class="px-4 py-2 bg-purple-600 text-white rounded">⬇ PDF</button>
+    </div>
 
-  <!-- 分析結果 -->
-  <div id="analysisResult" class="card text-gray-800 text-lg"></div>
+    <!-- 顏色設定 -->
+    <div class="flex gap-6 mb-6 flex-wrap">
+      <div>
+        <label class="block text-sm font-bold">雷達圖顏色</label>
+        <select id="colorSelect" class="mt-1 p-2 border rounded bg-yellow-50">
+          <option value="rgba(255,99,132,0.5)">紅色</option>
+          <option value="rgba(54,162,235,0.5)">藍色</option>
+          <option value="rgba(75,192,192,0.5)">綠色</option>
+          <option value="rgba(255,206,86,0.5)">黃色</option>
+          <option value="rgba(153,102,255,0.5)">紫色</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-bold">背景顏色</label>
+        <input type="color" id="bgPicker" value="#fff0f5" class="mt-1 h-10 w-20 border rounded">
+      </div>
+    </div>
 
-  <!-- 雷達圖 -->
-  <div class="card">
-    <h2 class="text-lg font-bold mb-2">能量分布</h2>
-    <canvas id="radarChart" width="400" height="400"></canvas>
-  </div>
-
-  <!-- 顏色設定 -->
-  <div class="card">
-    <h2 class="text-lg font-bold">介面設定</h2>
-    <label>背景顏色：<input type="color" id="bgColor" value="#fdf2f8" onchange="document.body.style.background=this.value"></label><br>
-    <label>雷達圖顏色：<input type="color" id="radarColor" value="#ec4899" onchange="updateRadarColor(this.value)"></label>
-  </div>
-
-  <!-- PDF 匯出 -->
-  <div class="card">
-    <h2 class="text-lg font-bold">下載報告</h2>
-    <input id="pdfName" type="text" placeholder="輸入檔名" class="border p-1 rounded">
-    <button onclick="downloadPDF()" class="ml-2 px-4 py-2 bg-indigo-500 text-white rounded-lg">下載 PDF</button>
-  </div>
-
-  <!-- 存檔管理 -->
-  <div class="card">
-    <h2 class="text-lg font-bold">存檔紀錄</h2>
-    <button onclick="loadRecords()" class="px-3 py-2 bg-gray-500 text-white rounded">載入紀錄</button>
-    <div id="recordList" class="mt-2 space-y-1"></div>
+    <!-- 分析輸出 -->
+    <div id="reportArea" class="bg-white p-4 rounded shadow">
+      <div id="progressBar" class="w-full bg-gray-200 rounded-full h-4 mb-4 hidden">
+        <div id="progressFill" class="h-4 bg-blue-500 rounded-full text-xs text-white text-center">0%</div>
+      </div>
+      <div id="analysisResult" class="prose max-w-none"></div>
+      <canvas id="radarChart" class="mt-6"></canvas>
+    </div>
   </div>
 
   <script>
@@ -123,94 +146,75 @@
 
     function setMode(m) {
       mode = m;
+      document.getElementById("singleInput").classList.toggle("hidden", m !== "single");
       document.getElementById("dualInput").classList.toggle("hidden", m !== "dual");
     }
 
-    async function analyze(context) {
-      // reset progress
-      const bar = document.getElementById("progressBar");
-      bar.style.width = "0%"; bar.innerText = "0%";
-      setTimeout(() => { bar.style.width = "100%"; bar.innerText = "100%"; }, 200);
+    function runAnalysis(type) {
+      document.getElementById("progressBar").classList.remove("hidden");
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 5;
+        document.getElementById("progressFill").style.width = progress + "%";
+        document.getElementById("progressFill").innerText = progress + "%";
+        if (progress >= 100) clearInterval(interval);
+      }, 100);
 
-      const body = {
-        mode,
-        aBeast: document.getElementById("aBeast").value,
-        aKin: document.getElementById("aKin").value,
-        aBranch: document.getElementById("aBranch").value,
-        bBeast: mode === "dual" ? document.getElementById("bBeast").value : null,
-        bKin: mode === "dual" ? document.getElementById("bKin").value : null,
-        bBranch: mode === "dual" ? document.getElementById("bBranch").value : null,
-        context
-      };
+      document.getElementById("analysisResult").innerHTML =
+        `<h2 class="text-xl font-bold">分析結果 (${type})</h2>
+         <p>這裡會顯示 ${type} 的完整分析內容（由 AI API 回傳）。</p>`;
 
-      const res = await fetch("/api/analyze", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-
-      document.getElementById("analysisResult").innerHTML = data.text.replace(/\n/g, "<br>");
-      updateRadarChart(data.radar);
-      saveRecord(data);
+      // 模擬雷達圖數據
+      const scores = [80, 65, 90, 70, 85];
+      renderRadar(scores);
     }
 
-    function updateRadarChart(scores) {
+    function renderRadar(scores) {
       const ctx = document.getElementById("radarChart").getContext("2d");
       if (radarChart) radarChart.destroy();
       radarChart = new Chart(ctx, {
-        type: "radar",
+        type: 'radar',
         data: {
-          labels: Object.keys(scores),
+          labels: ["情感", "事業", "人際", "健康", "靈性"],
           datasets: [{
-            label: "能量分布",
-            data: Object.values(scores),
-            backgroundColor: document.getElementById("radarColor").value + "33",
-            borderColor: document.getElementById("radarColor").value,
+            label: "分析分數",
+            data: scores,
+            backgroundColor: document.getElementById("colorSelect").value,
+            borderColor: "#333",
             borderWidth: 2
           }]
         },
         options: {
-          scales: { r: { min: 0, max: 10, ticks: { stepSize: 1, font: { size: 16 } } } }
+          responsive: true,
+          scales: {
+            r: { min: 0, max: 100, ticks: { stepSize: 20 } }
+          }
         }
       });
     }
 
-    function updateRadarColor(color) {
+    document.getElementById("colorSelect").addEventListener("change", e => {
       if (radarChart) {
-        radarChart.data.datasets[0].backgroundColor = color + "33";
-        radarChart.data.datasets[0].borderColor = color;
+        radarChart.data.datasets[0].backgroundColor = e.target.value;
         radarChart.update();
       }
-    }
+    });
+
+    document.getElementById("bgPicker").addEventListener("input", e => {
+      document.body.style.background = e.target.value;
+    });
 
     function downloadPDF() {
-      const name = document.getElementById("pdfName").value || "分析報告";
-      const element = document.body;
-      const opt = { margin: 0.5, filename: name + ".pdf", image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: "in", format: "a4", orientation: "portrait" } };
+      const name = document.getElementById("pdfName").value || "六獸分析報告";
+      const element = document.getElementById("reportArea");
+      const opt = {
+        margin: 0.5,
+        filename: name + ".pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
+      };
       html2pdf().set(opt).from(element).save();
-    }
-
-    // ====== 存檔功能 ======
-    function saveRecord(data) {
-      let records = JSON.parse(localStorage.getItem("analysisRecords") || "[]");
-      records.push(data);
-      localStorage.setItem("analysisRecords", JSON.stringify(records));
-    }
-
-    function loadRecords() {
-      let records = JSON.parse(localStorage.getItem("analysisRecords") || "[]");
-      let list = document.getElementById("recordList");
-      list.innerHTML = "";
-      records.forEach((r, i) => {
-        let btn = document.createElement("button");
-        btn.innerText = `${i+1}. ${r.meta.context} (${r.meta.timestamp})`;
-        btn.className = "block w-full text-left px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded";
-        btn.onclick = () => {
-          document.getElementById("analysisResult").innerHTML = r.text.replace(/\n/g,"<br>");
-          updateRadarChart(r.radar);
-        };
-        list.appendChild(btn);
-      });
     }
   </script>
 </body>
