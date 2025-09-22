@@ -3,261 +3,116 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>六獸個性預測分析</title>
+  <title>六獸分析系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <style>
-    @media print {
-      @page { margin: 14mm; }
-      body { background:#fff !important; }
-      .no-print { display:none !important; }
-      .print-card { box-shadow:none !important; border:1px solid #e5e7eb; }
-    }
-  </style>
 </head>
-<body class="bg-gradient-to-r from-indigo-100 to-pink-100 p-6">
-  <div class="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-2xl">
-    <h1 class="text-3xl font-bold mb-6 text-center text-purple-700">六獸個性預測</h1>
+<body class="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 text-gray-800 transition-colors duration-300">
 
-    <!-- 分析模式 -->
-    <div class="mb-4">
-      <label class="font-semibold">分析模式：</label>
-      <select id="mode" class="border rounded p-2">
-        <option value="single">單人分析</option>
-        <option value="double">雙人分析</option>
-      </select>
-    </div>
+  <div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-3xl font-bold text-center text-purple-700 mb-6">六獸 AI 分析系統</h1>
 
-    <!-- 單人輸入 -->
-    <div id="single-inputs" class="mb-4">
-      <select id="aBeast" class="border rounded p-2 mr-2">
-        <option>青龍</option><option>朱雀</option><option>勾陳</option>
-        <option>螣蛇</option><option>白虎</option><option>玄武</option>
-      </select>
-      <select id="aKin" class="border rounded p-2 mr-2">
-        <option>父母</option><option>兄弟</option><option>子孫</option>
-        <option>妻財</option><option>官鬼</option>
-      </select>
-      <select id="aBranch" class="border rounded p-2 mr-2">
-        <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-        <option>辰</option><option>巳</option><option>午</option><option>未</option>
-        <option>申</option><option>酉</option><option>戌</option><option>亥</option>
-      </select>
-    </div>
-
-    <!-- 雙人輸入 -->
-    <div id="double-inputs" class="mb-4 hidden">
-      <select id="bBeast" class="border rounded p-2 mr-2">
-        <option>青龍</option><option>朱雀</option><option>勾陳</option>
-        <option>螣蛇</option><option>白虎</option><option>玄武</option>
-      </select>
-      <select id="bKin" class="border rounded p-2 mr-2">
-        <option>父母</option><option>兄弟</option><option>子孫</option>
-        <option>妻財</option><option>官鬼</option>
-      </select>
-      <select id="bBranch" class="border rounded p-2 mr-2">
-        <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-        <option>辰</option><option>巳</option><option>午</option><option>未</option>
-        <option>申</option><option>酉</option><option>戌</option><option>亥</option>
-      </select>
-    </div>
-
-    <!-- 情境 -->
-    <div class="mb-4">
-      <label class="font-semibold">情境：</label>
-      <select id="context" class="border rounded p-2">
-        <option value="綜合">綜合</option>
-        <option value="職場">職場</option>
-        <option value="人際關係">人際關係</option>
-        <option value="愛情">愛情</option>
-        <option value="性愛">性愛</option>
-      </select>
-    </div>
-
-    <!-- 檔名 -->
-    <div class="mb-4">
-      <label class="font-semibold">輸出檔名：</label>
-      <input id="filename" class="border rounded p-2 w-full" placeholder="例如：青龍子x朱雀寅_職場分析.pdf" />
-    </div>
-
-    <!-- 按鈕 -->
-    <div class="flex gap-4 mb-4">
-      <button onclick="startAnalysis(false)" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
-        單次分析
-      </button>
-      <button onclick="startAnalysis(true)" class="bg-gradient-to-r from-yellow-400 to-red-500 text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
-        批次分析（職場+愛情+性愛）
-      </button>
-    </div>
-
-    <!-- 進度條 -->
-    <div id="progress" class="w-full bg-gray-200 rounded mt-4 hidden">
-      <div id="progress-bar" 
-           class="text-xs leading-none py-1 text-center text-white rounded w-0"
-           style="background: linear-gradient(to right, #f472b6, #facc15);">
-        0%
+    <!-- 顏色控制 -->
+    <div class="flex gap-4 mb-6">
+      <div>
+        <label class="block text-sm font-medium">雷達圖顏色</label>
+        <select id="colorSelect" class="mt-1 p-2 border rounded">
+          <option value="rgba(255,99,132,0.5)">紅色</option>
+          <option value="rgba(54,162,235,0.5)">藍色</option>
+          <option value="rgba(75,192,192,0.5)">綠色</option>
+          <option value="rgba(255,206,86,0.5)">黃色</option>
+          <option value="rgba(153,102,255,0.5)">紫色</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium">背景顏色</label>
+        <input type="color" id="bgPicker" value="#fff0f5" class="mt-1 h-10 w-20 border rounded">
       </div>
     </div>
 
-    <!-- 結果 -->
-    <div id="result" class="mt-6 hidden print-card p-6 border rounded-2xl shadow-xl bg-gradient-to-r from-pink-50 to-yellow-50">
-      <h2 class="text-xl font-bold text-pink-600 mb-4">分析結果</h2>
-      <div id="result-text" class="whitespace-pre-line mb-4 text-sm"></div>
-      <canvas id="radarChart" width="300" height="300"></canvas>
+    <!-- 分析按鈕 -->
+    <div class="flex gap-4 mb-6">
+      <button onclick="analyze('職場')" class="px-4 py-2 bg-blue-500 text-white rounded">職場分析</button>
+      <button onclick="analyze('愛情')" class="px-4 py-2 bg-pink-500 text-white rounded">愛情分析</button>
+      <button onclick="analyze('性愛')" class="px-4 py-2 bg-red-500 text-white rounded">性愛分析</button>
+    </div>
 
-      <!-- 列印與下載 -->
-      <div class="mt-4 flex gap-4">
-        <button onclick="printResult()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-700 no-print">
-          列印分析結果
-        </button>
-        <button onclick="downloadPDF()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 no-print">
-          下載彩色 PDF
-        </button>
-      </div>
+    <!-- 分析內容 -->
+    <div id="analysisResult" class="bg-white shadow rounded p-4 mb-6"></div>
 
-      <!-- 雷達圖切換 -->
-      <div id="radar-switch" class="mt-4 hidden no-print"></div>
+    <!-- 雷達圖 -->
+    <div class="bg-white shadow rounded p-4">
+      <canvas id="radarChart"></canvas>
+    </div>
+
+    <!-- 列印 -->
+    <div class="mt-6 text-center">
+      <button onclick="window.print()" class="px-6 py-2 bg-green-600 text-white rounded shadow">列印結果</button>
     </div>
   </div>
 
-<script>
-let chartInstance = null;
-let multiResults = [];
-
-async function startAnalysis(multi = false) {
-  document.getElementById("progress").classList.remove("hidden");
-  updateProgress(0);
-
-  let progress = 0;
-  const interval = setInterval(() => {
-    if (progress < 95) {
-      progress += 5;
-      updateProgress(progress);
-    }
-  }, 200);
-
-  const mode = document.getElementById("mode").value;
-  const aBeast = document.getElementById("aBeast").value;
-  const aKin = document.getElementById("aKin").value;
-  const aBranch = document.getElementById("aBranch").value;
-  const bBeast = document.getElementById("bBeast").value;
-  const bKin = document.getElementById("bKin").value;
-  const bBranch = document.getElementById("bBranch").value;
-  const context = document.getElementById("context").value;
-
-  const response = await fetch("/api/analyze", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, aBeast, aKin, aBranch, bBeast, bKin, bBranch, context, multi })
-  });
-  const data = await response.json();
-
-  clearInterval(interval);
-  updateProgress(100);
-
-  document.getElementById("result").classList.remove("hidden");
-
-  if (multi && data.results) {
-    multiResults = data.results;
-    const container = document.getElementById("result-text");
-    container.innerHTML = "";
-    multiResults.forEach((r, i) => {
-      container.innerHTML += `<h3 class="text-lg font-bold text-purple-600 mt-4">${r.context} 分析</h3><div>${r.text}</div>`;
-    });
-    drawRadar(multiResults[0].scores);
-
-    const switchDiv = document.getElementById("radar-switch");
-    switchDiv.innerHTML = "<p class='font-semibold mb-2'>切換雷達圖：</p>";
-    multiResults.forEach((r, i) => {
-      const btn = document.createElement("button");
-      btn.innerText = r.context;
-      btn.className = "px-3 py-1 bg-gradient-to-r from-green-400 to-blue-500 text-white rounded mr-2 hover:opacity-90";
-      btn.onclick = () => drawRadar(r.scores);
-      switchDiv.appendChild(btn);
-    });
-    switchDiv.classList.remove("hidden");
-
-  } else if (data.text) {
-    document.getElementById("result-text").innerHTML = data.text;
-    drawRadar(data.scores);
-    document.getElementById("radar-switch").classList.add("hidden");
-  }
-}
-
-function updateProgress(value) {
-  const bar = document.getElementById("progress-bar");
-  bar.style.width = value + "%";
-  bar.innerText = value + "%";
-}
-
-// 雷達圖 + 數值標籤
-function drawRadar(scores) {
-  const ctx = document.getElementById("radarChart").getContext("2d");
-  if (chartInstance) chartInstance.destroy();
-  const labels = ["情感", "事業", "健康", "財運", "智慧"];
-  const values = labels.map(l => scores && scores[l] ? scores[l] : 0);
-
-  chartInstance = new Chart(ctx, {
-    type: "radar",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "能量分布",
-        data: values,
-        fill: true,
-        borderColor: "#ec4899",
-        backgroundColor: "rgba(244, 114, 182, 0.3)",
-        pointBackgroundColor: "#facc15",
-        pointBorderColor: "#f472b6"
-      }]
-    },
-    options: {
-      responsive: true,
-      animation: {
-        duration: 2000,
-        easing: 'easeOutElastic'
+  <script>
+    // 預設雷達圖
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    const radarChart = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: ["情感", "事業", "健康", "財運", "智慧"],
+        datasets: [{
+          label: "能量分布",
+          data: [5, 5, 5, 5, 5],
+          backgroundColor: "rgba(255,99,132,0.5)",
+          borderColor: "rgba(255,99,132,1)",
+          borderWidth: 2
+        }]
       },
-      scales: { r: { beginAtZero: true, max: 10 } },
-      plugins: {
-        legend: { labels: { color: "#374151" } },
-        datalabels: {
-          color: '#111',
-          font: { weight: 'bold' },
-          formatter: (value) => value
+      options: {
+        responsive: true,
+        animation: { duration: 1500, easing: "easeOutQuart" },
+        scales: {
+          r: { min: 0, max: 10, ticks: { stepSize: 1 } }
         }
       }
-    },
-    plugins: [ChartDataLabels]
-  });
-}
+    });
 
-function printResult() { window.print(); }
+    // 改顏色
+    document.getElementById("colorSelect").addEventListener("change", (e) => {
+      const color = e.target.value;
+      radarChart.data.datasets[0].backgroundColor = color;
+      radarChart.data.datasets[0].borderColor = color.replace("0.5", "1");
+      radarChart.update();
+    });
 
-async function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF("p", "mm", "a4");
-  const filename = document.getElementById("filename").value.trim() || "分析結果.pdf";
-  const result = document.getElementById("result");
-  const canvas = await html2canvas(result, { scale: 2 });
-  const imgData = canvas.toDataURL("image/png");
-  const imgWidth = 190;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
-  pdf.save(filename.endsWith(".pdf") ? filename : filename + ".pdf");
-}
+    // 改背景
+    document.getElementById("bgPicker").addEventListener("input", (e) => {
+      document.body.style.background = e.target.value;
+    });
 
-document.getElementById("mode").addEventListener("change", function() {
-  if (this.value === "single") {
-    document.getElementById("single-inputs").classList.remove("hidden");
-    document.getElementById("double-inputs").classList.add("hidden");
-  } else {
-    document.getElementById("single-inputs").classList.remove("hidden");
-    document.getElementById("double-inputs").classList.remove("hidden");
-  }
-});
-</script>
+    // 模擬 API 回傳
+    async function analyze(type) {
+      document.getElementById("analysisResult").innerHTML = `<p class="text-gray-500">分析中...請稍候</p>`;
+      
+      // 模擬 API 回傳
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ context: type })
+      });
+      const data = await response.json();
+
+      // 套用結果
+      document.getElementById("analysisResult").innerHTML = data.text;
+
+      // 更新雷達圖
+      radarChart.data.datasets[0].data = [
+        data.scores["情感"],
+        data.scores["事業"],
+        data.scores["健康"],
+        data.scores["財運"],
+        data.scores["智慧"]
+      ];
+      radarChart.update();
+    }
+  </script>
 </body>
 </html>
