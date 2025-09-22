@@ -20,24 +20,28 @@
   <div class="max-w-5xl mx-auto space-y-6">
     <h1 class="text-3xl font-bold text-center text-indigo-600">仙人指路 六獸個性分析系統</h1>
 
-    <!-- 模式切換 -->
+    <!-- 分析模式切換 -->
     <div class="card">
       <h2 class="section-title">分析模式</h2>
-      <button onclick="setMode('single')" class="px-4 py-2 bg-indigo-500 text-white rounded">單人</button>
-      <button onclick="setMode('double')" class="px-4 py-2 bg-pink-500 text-white rounded">雙人</button>
+      <div class="flex gap-4">
+        <button onclick="setMode('single')" class="px-4 py-2 bg-indigo-500 text-white rounded">單人分析</button>
+        <button onclick="setMode('double')" class="px-4 py-2 bg-pink-500 text-white rounded">雙人分析</button>
+      </div>
     </div>
 
     <!-- 輸入區 -->
-    <div id="inputArea" class="card space-y-4"></div>
+    <div id="inputArea" class="card space-y-4">
+      <!-- 預設顯示單人輸入 -->
+    </div>
 
-    <!-- 情境 -->
+    <!-- 情境選擇 -->
     <div class="card">
       <h2 class="section-title">情境選擇</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <button onclick="startAnalysis('personality')" class="bg-blue-500 text-white p-2 rounded">個性</button>
-        <button onclick="startAnalysis('career')" class="bg-green-500 text-white p-2 rounded">職場</button>
-        <button onclick="startAnalysis('love')" class="bg-pink-500 text-white p-2 rounded">愛情</button>
-        <button onclick="startAnalysis('sex')" class="bg-red-500 text-white p-2 rounded">性愛</button>
+        <button onclick="startAnalysis('personality')" class="bg-blue-500 text-white p-2 rounded">個性分析</button>
+        <button onclick="startAnalysis('career')" class="bg-green-500 text-white p-2 rounded">職場分析</button>
+        <button onclick="startAnalysis('love')" class="bg-pink-500 text-white p-2 rounded">愛情分析</button>
+        <button onclick="startAnalysis('sex')" class="bg-red-500 text-white p-2 rounded">性愛分析</button>
       </div>
     </div>
 
@@ -78,5 +82,12 @@
   </div>
 
   <script src="analyze.js"></script>
+  <script>
+    // 預設載入單人模式
+    window.onload = () => {
+      setMode('single');
+      loadUserInfo();
+    };
+  </script>
 </body>
 </html>
