@@ -1,18 +1,5 @@
-async function analyze(data) {
-  try {
-    const response = await fetch("/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return await response.json();
-  } catch (e) {
-    console.error("分析失敗", e);
-    return { analysis: "⚠ 系統錯誤，請再試一次。", radar: {}, quote: "保持信心，一切都會更好。" };
-  }
-}
-
 let mode = "single";
+
 function setMode(m) {
   mode = m;
   const inputArea = document.getElementById("inputArea");
@@ -20,7 +7,7 @@ function setMode(m) {
   if (m === "single") {
     inputArea.innerHTML = singleInput("A");
   } else {
-    inputArea.innerHTML = singleInput("A") + "<hr class='my-3'/>" + singleInput("B");
+    inputArea.innerHTML = singleInput("A") + "<hr class='my-3'>" + singleInput("B");
   }
 }
 
@@ -67,7 +54,12 @@ async function startAnalysis(type) {
     updateProgress(percent);
   }, 200);
 
-  const result = await analyze(payload);
+  const result = await fetch("/api/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }).then(r => r.json());
+
   clearInterval(interval);
   updateProgress(100);
 
@@ -109,36 +101,4 @@ function saveUserInfo() {
 function loadUserInfo() {
   document.getElementById("userName").value = localStorage.getItem("userName") || "阿青師";
   document.getElementById("userURL").value = localStorage.getItem("userURL") || "https://www.facebook.com/chin168888/";
-}
-window.onload = loadUserInfo;
-
-async function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(18);
-  doc.text("六獸個性分析報告", 20, 20);
-
-  const userName = document.getElementById("userName").value;
-  const userURL = document.getElementById("userURL").value;
-
-  doc.setFontSize(12);
-  doc.text("屬名人：" + userName, 20, 35);
-  doc.text("網址：" + userURL, 20, 45);
-
-  const canvas = document.getElementById("radarChart");
-  const imgData = canvas.toDataURL("image/png");
-  doc.addImage(imgData, "PNG", 20, 60, 160, 160);
-
-  const text = document.getElementById("analysisOutput").innerText;
-  doc.text(text, 20, 230, { maxWidth: 170 });
-
-  const qrCanvas = document.createElement("canvas");
-  await QRCode.toCanvas(qrCanvas, userURL);
-  const qrImg = qrCanvas.toDataURL("image/png");
-  doc.addImage(qrImg, "PNG", 150, 20, 40, 40);
-
-  doc.setFontSize(10);
-  doc.text("軟體製作人：仙人指路占卜研究學會阿青師", 20, 280);
-
-  doc.save("六獸個性分析.pdf");
 }
