@@ -3,218 +3,180 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>仙人指路六獸個性預測</title>
+  <title>六獸個性預測分析</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     @media print {
       @page { margin: 14mm; }
-      .no-print { display: none !important; }
-      body { background: #fff !important; }
-      .print-card { box-shadow: none !important; border: 1px solid #e5e7eb; }
+      body { background:#fff !important; }
+      .no-print { display:none !important; }
+      .print-card { box-shadow:none !important; border:1px solid #e5e7eb; }
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-gray-100 p-6">
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">六獸個性預測</h1>
 
-  <!-- Header -->
-  <header class="bg-amber-600 text-white p-4 text-center text-xl font-bold">
-    仙人指路 · 六獸個性預測
-  </header>
-
-  <!-- Tabs -->
-  <div class="flex justify-center space-x-4 mt-4 no-print">
-    <button id="tab-single" class="px-4 py-2 bg-amber-500 text-white rounded-lg">單人分析</button>
-    <button id="tab-double" class="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg">雙人分析</button>
-  </div>
-
-  <!-- Content -->
-  <main class="max-w-3xl mx-auto p-4">
-    
-    <!-- 情境按鈕 -->
-    <div class="flex flex-wrap gap-2 justify-center my-4 no-print">
-      <button class="context-btn px-3 py-1 bg-slate-200 rounded" data-context="職場">職場</button>
-      <button class="context-btn px-3 py-1 bg-slate-200 rounded" data-context="對應關係">對應關係</button>
-      <button class="context-btn px-3 py-1 bg-slate-200 rounded" data-context="人際關係">人際關係</button>
-      <button class="context-btn px-3 py-1 bg-slate-200 rounded" data-context="愛情">愛情</button>
-      <button class="context-btn px-3 py-1 bg-slate-200 rounded" data-context="性愛">性愛</button>
+    <!-- 分析模式選擇 -->
+    <div class="mb-4">
+      <label class="font-semibold">分析模式：</label>
+      <select id="mode" class="border rounded p-2">
+        <option value="single">單人分析</option>
+        <option value="double">雙人分析</option>
+      </select>
     </div>
 
-    <!-- 單人分析 -->
-    <section id="single-panel" class="mt-4">
-      <div class="bg-white rounded-2xl shadow p-4">
-        <h2 class="font-bold mb-2 text-lg">單人分析</h2>
-        <div class="grid grid-cols-3 gap-3 mb-4">
-          <select id="s-beast" class="p-2 border rounded">
-            <option value="">選擇六獸</option>
-            <option>青龍</option><option>朱雀</option>
-            <option>勾陳</option><option>螣蛇</option>
-            <option>白虎</option><option>玄武</option>
-          </select>
-          <select id="s-kin" class="p-2 border rounded">
-            <option value="">選擇六親</option>
-            <option>父母</option><option>兄弟</option>
-            <option>子孫</option><option>妻財</option>
-            <option>官鬼</option>
-          </select>
-          <select id="s-branch" class="p-2 border rounded">
-            <option value="">選擇地支</option>
-            <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-            <option>辰</option><option>巳</option><option>午</option><option>未</option>
-            <option>申</option><option>酉</option><option>戌</option><option>亥</option>
-          </select>
-        </div>
-        <div class="flex space-x-3 no-print">
-          <button onclick="analyzeSingle()" class="px-4 py-2 bg-amber-600 text-white rounded">開始分析</button>
-          <button onclick="window.print()" class="px-4 py-2 bg-slate-500 text-white rounded">列印</button>
-          <button onclick="clearResult()" class="px-4 py-2 bg-red-500 text-white rounded">清除</button>
-        </div>
-      </div>
-    </section>
+    <!-- 角色選擇 -->
+    <div id="single-inputs" class="mb-4">
+      <input id="aBeast" placeholder="六獸 (例：青龍)" class="border rounded p-2 mr-2" />
+      <input id="aBranch" placeholder="地支 (例：子)" class="border rounded p-2 mr-2" />
+    </div>
 
-    <!-- 雙人分析 -->
-    <section id="double-panel" class="mt-4 hidden">
-      <div class="bg-white rounded-2xl shadow p-4">
-        <h2 class="font-bold mb-2 text-lg">雙人分析</h2>
-        <div class="grid grid-cols-3 gap-3 mb-2">
-          <select id="a-beast" class="p-2 border rounded"><option value="">甲方六獸</option><option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option></select>
-          <select id="a-kin" class="p-2 border rounded"><option value="">甲方六親</option><option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option></select>
-          <select id="a-branch" class="p-2 border rounded"><option value="">甲方地支</option><option>子</option><option>丑</option><option>寅</option><option>卯</option><option>辰</option><option>巳</option><option>午</option><option>未</option><option>申</option><option>酉</option><option>戌</option><option>亥</option></select>
-        </div>
-        <div class="grid grid-cols-3 gap-3 mb-4">
-          <select id="b-beast" class="p-2 border rounded"><option value="">乙方六獸</option><option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option></select>
-          <select id="b-kin" class="p-2 border rounded"><option value="">乙方六親</option><option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option></select>
-          <select id="b-branch" class="p-2 border rounded"><option value="">乙方地支</option><option>子</option><option>丑</option><option>寅</option><option>卯</option><option>辰</option><option>巳</option><option>午</option><option>未</option><option>申</option><option>酉</option><option>戌</option><option>亥</option></select>
-        </div>
-        <div class="flex space-x-3 no-print">
-          <button onclick="analyzeDouble()" class="px-4 py-2 bg-amber-600 text-white rounded">開始分析</button>
-          <button onclick="window.print()" class="px-4 py-2 bg-slate-500 text-white rounded">列印</button>
-          <button onclick="clearResult()" class="px-4 py-2 bg-red-500 text-white rounded">清除</button>
-        </div>
-      </div>
-    </section>
+    <div id="double-inputs" class="mb-4 hidden">
+      <input id="bBeast" placeholder="對方六獸 (例：朱雀)" class="border rounded p-2 mr-2" />
+      <input id="bBranch" placeholder="對方地支 (例：寅)" class="border rounded p-2 mr-2" />
+    </div>
+
+    <!-- 情境選擇 -->
+    <div class="mb-4">
+      <label class="font-semibold">情境：</label>
+      <select id="context" class="border rounded p-2">
+        <option value="綜合">綜合</option>
+        <option value="職場">職場</option>
+        <option value="人際關係">人際關係</option>
+        <option value="愛情">愛情</option>
+        <option value="性愛">性愛</option>
+      </select>
+    </div>
+
+    <!-- 分析按鈕 -->
+    <button onclick="startAnalysis()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">開始分析</button>
+
+    <!-- 進度條 -->
+    <div id="progress" class="w-full bg-gray-200 rounded mt-4 hidden">
+      <div id="progress-bar" class="bg-blue-600 text-xs leading-none py-1 text-center text-white rounded w-0">0%</div>
+    </div>
 
     <!-- 分析結果 -->
-    <section id="result" class="mt-6 hidden">
-      <div class="bg-white p-4 rounded-2xl shadow print-card">
-        <h2 class="font-bold text-lg mb-2">分析結果</h2>
-        <div id="progress" class="w-full bg-slate-200 h-4 rounded mb-4 hidden">
-          <div id="progress-bar" class="h-4 bg-amber-500 text-xs text-white text-center rounded" style="width:0%">0%</div>
-        </div>
-        <p id="result-text" class="mb-4 text-slate-700">分析中...</p>
-        <canvas id="radarChart" class="w-full h-64"></canvas>
+    <div id="result" class="mt-6 hidden print-card p-4 border rounded shadow">
+      <div id="result-text" class="whitespace-pre-line mb-4 text-sm"></div>
+      <canvas id="radarChart" width="300" height="300"></canvas>
+
+      <!-- 列印與下載 PDF -->
+      <div class="mt-4 flex gap-4">
+        <button onclick="printResult()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 no-print">
+          列印分析結果
+        </button>
+        <button onclick="downloadPDF()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 no-print">
+          下載 PDF
+        </button>
       </div>
-    </section>
+    </div>
+  </div>
 
-  </main>
+<script>
+let chartInstance = null;
 
-  <script>
-    let currentContext = "";
-    let chartInstance;
-
-    // Tab 切換
-    const tabSingle = document.getElementById("tab-single");
-    const tabDouble = document.getElementById("tab-double");
-    const singlePanel = document.getElementById("single-panel");
-    const doublePanel = document.getElementById("double-panel");
-
-    tabSingle.addEventListener("click", () => {
-      tabSingle.className = "px-4 py-2 bg-amber-500 text-white rounded-lg";
-      tabDouble.className = "px-4 py-2 bg-slate-300 text-slate-700 rounded-lg";
-      singlePanel.classList.remove("hidden");
-      doublePanel.classList.add("hidden");
-    });
-
-    tabDouble.addEventListener("click", () => {
-      tabDouble.className = "px-4 py-2 bg-amber-500 text-white rounded-lg";
-      tabSingle.className = "px-4 py-2 bg-slate-300 text-slate-700 rounded-lg";
-      doublePanel.classList.remove("hidden");
-      singlePanel.classList.add("hidden");
-    });
-
-    // 情境按鈕
-    document.querySelectorAll(".context-btn").forEach(btn=>{
-      btn.addEventListener("click",()=>{
-        currentContext = btn.dataset.context;
-        document.querySelectorAll(".context-btn").forEach(b=>b.classList.remove("bg-amber-400"));
-        btn.classList.add("bg-amber-400");
-      });
-    });
-
-    // 模擬進度條
-    function runProgress(callback){
-      const bar = document.getElementById("progress-bar");
-      const box = document.getElementById("progress");
-      box.classList.remove("hidden");
-      let percent = 0;
-      const interval = setInterval(()=>{
-        percent += Math.floor(Math.random()*10)+5;
-        if(percent >= 100){ percent=100; clearInterval(interval); callback(); }
-        bar.style.width = percent+"%";
-        bar.textContent = percent+"%";
-      },200);
+// 顯示進度條
+async function startAnalysis() {
+  document.getElementById("progress").classList.remove("hidden");
+  let progress = 0;
+  const interval = setInterval(() => {
+    if (progress < 90) {
+      progress += 10;
+      updateProgress(progress);
     }
+  }, 300);
 
-    // 單人分析
-    async function analyzeSingle(){
-      const beast = document.getElementById("s-beast").value;
-      const kin = document.getElementById("s-kin").value;
-      const branch = document.getElementById("s-branch").value;
-      if(!beast||!kin||!branch){ alert("請完整選擇六獸、六親、地支"); return; }
-      showResult("分析中...");
-      runProgress(async ()=>{
-        const res = await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({mode:"single",aBeast:beast,aKin:kin,aBranch:branch,context:currentContext})});
-        const data = await res.json();
-        document.getElementById("result-text").innerText=data.text||"無分析結果";
-        drawRadar(data.scores);
-      });
-    }
+  const mode = document.getElementById("mode").value;
+  const aBeast = document.getElementById("aBeast").value || "青龍";
+  const aBranch = document.getElementById("aBranch").value || "子";
+  const bBeast = document.getElementById("bBeast").value || "朱雀";
+  const bBranch = document.getElementById("bBranch").value || "寅";
+  const context = document.getElementById("context").value;
 
-    // 雙人分析
-    async function analyzeDouble(){
-      const aBeast=document.getElementById("a-beast").value;
-      const aKin=document.getElementById("a-kin").value;
-      const aBranch=document.getElementById("a-branch").value;
-      const bBeast=document.getElementById("b-beast").value;
-      const bKin=document.getElementById("b-kin").value;
-      const bBranch=document.getElementById("b-branch").value;
-      if(!aBeast||!aKin||!aBranch||!bBeast||!bKin||!bBranch){ alert("請完整選擇甲乙雙方資料"); return; }
-      showResult("分析中...");
-      runProgress(async ()=>{
-        const res = await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({mode:"double",aBeast,aKin,aBranch,bBeast,bKin,bBranch,context:currentContext})});
-        const data = await res.json();
-        document.getElementById("result-text").innerText=data.text||"無分析結果";
-        drawRadar(data.scores);
-      });
-    }
+  const response = await fetch("/api/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode, aBeast, aBranch, bBeast, bBranch, context })
+  });
+  const data = await response.json();
 
-    // 顯示結果
-    function showResult(text){
-      document.getElementById("result").classList.remove("hidden");
-      document.getElementById("result-text").innerText=text;
-    }
+  clearInterval(interval);
+  updateProgress(100);
 
-    // 畫雷達圖
-    function drawRadar(scores){
-      const ctx=document.getElementById("radarChart").getContext("2d");
-      if(chartInstance) chartInstance.destroy();
-      const labels=["情感","事業","健康","財運","智慧"];
-      const values = labels.map(l=> scores && scores[l] ? scores[l] : 0);
-      chartInstance=new Chart(ctx,{
-        type:"radar",
-        data:{labels:labels,
-          datasets:[{label:"能量分布",data:values,fill:true}]},
-        options:{responsive:true,scales:{r:{beginAtZero:true,max:10}}}
-      });
-    }
+  showResult(data.text, data.scores);
+}
 
-    // 清除
-    function clearResult(){
-      document.getElementById("result").classList.add("hidden");
-      if(chartInstance) chartInstance.destroy();
-    }
-  </script>
+function updateProgress(value) {
+  const bar = document.getElementById("progress-bar");
+  bar.style.width = value + "%";
+  bar.innerText = value + "%";
+}
+
+// 顯示結果
+function showResult(text, scores) {
+  document.getElementById("result").classList.remove("hidden");
+  document.getElementById("result-text").innerHTML = text.replace(/\n/g, "<br>");
+  drawRadar(scores);
+}
+
+// 畫雷達圖
+function drawRadar(scores) {
+  const ctx = document.getElementById("radarChart").getContext("2d");
+  if (chartInstance) chartInstance.destroy();
+  const labels = ["情感", "事業", "健康", "財運", "智慧"];
+  const values = labels.map(l => scores && scores[l] ? scores[l] : 0);
+  chartInstance = new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "能量分布",
+        data: values,
+        fill: true,
+        borderColor: "rgba(54,162,235,1)",
+        backgroundColor: "rgba(54,162,235,0.2)"
+      }]
+    },
+    options: { responsive: true, scales: { r: { beginAtZero: true, max: 10 } } }
+  });
+}
+
+// 列印
+function printResult() {
+  window.print();
+}
+
+// 下載 PDF
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  const text = document.getElementById("result-text").innerText;
+  pdf.setFontSize(12);
+  pdf.text(text, 10, 20);
+
+  // 匯出雷達圖
+  const canvas = document.getElementById("radarChart");
+  const imgData = canvas.toDataURL("image/png");
+  pdf.addImage(imgData, "PNG", 10, 80, 180, 120);
+
+  pdf.save("分析結果.pdf");
+}
+
+// 切換單人 / 雙人
+document.getElementById("mode").addEventListener("change", function() {
+  if (this.value === "single") {
+    document.getElementById("single-inputs").classList.remove("hidden");
+    document.getElementById("double-inputs").classList.add("hidden");
+  } else {
+    document.getElementById("single-inputs").classList.remove("hidden");
+    document.getElementById("double-inputs").classList.remove("hidden");
+  }
+});
+</script>
 </body>
 </html>
