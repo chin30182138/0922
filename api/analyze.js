@@ -5,8 +5,6 @@ export default async function handler(req, res) {
     }
 
     const { context } = req.body ?? {};
-
-    // === Prompt 決策 ===
     let prompt = `你是一位六獸卜卦專家，請針對「${context}」生成完整分析。`;
 
     if (context === "職場") {
@@ -43,6 +41,17 @@ export default async function handler(req, res) {
 3. 可能衝突點（三條）
 4. 維繫愛情的方法（三條）
 5. 經典愛情箴言（1~2句）
+
+最後附 JSON：{"情感":數字,"事業":數字,"健康":數字,"財運":數字,"智慧":數字}`;
+    } else if (context === "個性") {
+      prompt += `
+請針對六獸與地支的組合，生成「個人性格分析」。
+請使用以下結構：
+1. 核心個性特質（2~3點）
+2. 優勢表現（2~3條）
+3. 潛在弱點（2~3條）
+4. 人生建議（三條）
+5. 經典性格箴言（1句）
 
 最後附 JSON：{"情感":數字,"事業":數字,"健康":數字,"財運":數字,"智慧":數字}`;
     } else {
@@ -88,9 +97,7 @@ export default async function handler(req, res) {
 
     // === 清理 Markdown ===
     content = content.replace(/```json|```/g, ""); // 移除程式區塊
-    content = content.replace(/^#+\s?/gm, ""); // 移除 # 符號
-
-    // Markdown → HTML
+    content = content.replace(/^#+\s?/gm, "");     // 移除 # 符號
     content = content
       .replace(/\*\*(.*?)\*\*/g, '<strong class="text-indigo-700">$1</strong>')
       .replace(/\n/g, "<br>");
