@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>仙人指路分析系統</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label { display: block; margin-top: 10px; }
+    select, input { margin-top: 5px; padding: 5px; }
+    button { margin-top: 15px; padding: 10px 15px; }
+    #result { margin-top: 20px; white-space: pre-line; }
+  </style>
+</head>
+<body>
+  <h1>仙人指路分析系統</h1>
+  
+  <form id="analyzeForm">
+    <label>第一人：六獸
+      <select name="aBeast">
+        <option value="青龍">青龍</option>
+        <option value="朱雀">朱雀</option>
+        <option value="勾陳">勾陳</option>
+        <option value="螣蛇">螣蛇</option>
+        <option value="白虎">白虎</option>
+        <option value="玄武">玄武</option>
+      </select>
+    </label>
+
+    <label>第一人：六親
+      <select name="aKin">
+        <option value="父母">父母</option>
+        <option value="兄弟">兄弟</option>
+        <option value="子孫">子孫</option>
+        <option value="妻財">妻財</option>
+        <option value="官鬼">官鬼</option>
+      </select>
+    </label>
+
+    <label>第一人：地支
+      <input type="text" name="aBranch" placeholder="如：子、丑、寅..." />
+    </label>
+
+    <label>情境
+      <select name="context">
+        <option value="職場互動">職場互動</option>
+        <option value="愛情">愛情</option>
+        <option value="性愛">性愛</option>
+        <option value="健康">健康</option>
+      </select>
+    </label>
+
+    <button type="submit">開始分析</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    document.getElementById("analyzeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const body = Object.fromEntries(formData.entries());
+
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      document.getElementById("result").textContent = data.text || JSON.stringify(data, null, 2);
+    });
+  </script>
+</body>
+</html>
