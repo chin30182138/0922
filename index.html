@@ -30,7 +30,7 @@
       </select>
     </div>
 
-    <!-- 單人 -->
+    <!-- 單人輸入 -->
     <div id="single-inputs" class="mb-4">
       <select id="aBeast" class="border rounded p-2 mr-2">
         <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
@@ -44,7 +44,7 @@
       </select>
     </div>
 
-    <!-- 雙人 -->
+    <!-- 雙人輸入 -->
     <div id="double-inputs" class="mb-4 hidden">
       <select id="bBeast" class="border rounded p-2 mr-2">
         <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
@@ -76,10 +76,15 @@
       <input id="filename" class="border rounded p-2 w-full" placeholder="例如：青龍子x朱雀寅_職場分析.pdf" />
     </div>
 
-    <!-- 分析按鈕 -->
-    <button onclick="startAnalysis()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
-      開始分析
-    </button>
+    <!-- 按鈕 -->
+    <div class="flex gap-4 mb-4">
+      <button onclick="startAnalysis(false)" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
+        單次分析
+      </button>
+      <button onclick="startAnalysis(true)" class="bg-pink-600 text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
+        批次分析（職場+愛情+性愛）
+      </button>
+    </div>
 
     <!-- 進度條 -->
     <div id="progress" class="w-full bg-gray-200 rounded mt-4 hidden">
@@ -92,7 +97,7 @@
       <div id="result-text" class="whitespace-pre-line mb-4 text-sm"></div>
       <canvas id="radarChart" width="300" height="300"></canvas>
 
-      <!-- 列印與下載 PDF -->
+      <!-- 列印與下載 -->
       <div class="mt-4 flex gap-4">
         <button onclick="printResult()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 no-print">
           列印分析結果
@@ -101,19 +106,20 @@
           下載彩色 PDF
         </button>
       </div>
+
+      <!-- 雷達圖切換 -->
+      <div id="radar-switch" class="mt-4 hidden no-print"></div>
     </div>
   </div>
 
 <script>
 let chartInstance = null;
+let multiResults = [];
 
 // 分析流程
-async function startAnalysis() {
+async function startAnalysis(multi = false) {
   document.getElementById("progress").classList.remove("hidden");
-  let progress = 0;
-  const interval = setInterval(() => {
-    if (progress < 90) { progress += 10; updateProgress(progress); }
-  }, 300);
+  updateProgress(0);
 
   const mode = document.getElementById("mode").value;
   const aBeast = document.getElementById("aBeast").value;
@@ -127,14 +133,41 @@ async function startAnalysis() {
   const response = await fetch("/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, aBeast, aKin, aBranch, bBeast, bKin, bBranch, context })
+    body: JSON.stringify({ mode, aBeast, aKin, aBranch, bBeast, bKin, bBranch, context, multi })
   });
   const data = await response.json();
 
-  clearInterval(interval);
   updateProgress(100);
+  document.getElementById("result").classList.remove("hidden");
 
-  showResult(data.text, data.scores);
+  if (multi) {
+    multiResults = data.results;
+    const container = document.getElementById("result-text");
+    container.innerHTML = "";
+    multiResults.forEach((r, i) => {
+      container.innerHTML += `<h3 class="text-lg font-bold text-indigo-600 mt-4">${r.context} 分析</h3><p>${r.text.replace(/\n/g,"<br>")}</p>`;
+    });
+
+    // 預設顯示第一個雷達圖
+    drawRadar(multiResults[0].scores);
+
+    // 建立切換按鈕
+    const switchDiv = document.getElementById("radar-switch");
+    switchDiv.innerHTML = "<p class='font-semibold mb-2'>切換雷達圖：</p>";
+    multiResults.forEach((r, i) => {
+      const btn = document.createElement("button");
+      btn.innerText = r.context;
+      btn.className = "px-3 py-1 bg-blue-500 text-white rounded mr-2 hover:bg-blue-700";
+      btn.onclick = () => drawRadar(r.scores);
+      switchDiv.appendChild(btn);
+    });
+    switchDiv.classList.remove("hidden");
+
+  } else {
+    document.getElementById("result-text").innerHTML = data.text.replace(/\n/g,"<br>");
+    drawRadar(data.scores);
+    document.getElementById("radar-switch").classList.add("hidden");
+  }
 }
 
 function updateProgress(value) {
@@ -143,14 +176,6 @@ function updateProgress(value) {
   bar.innerText = value + "%";
 }
 
-// 顯示結果
-function showResult(text, scores) {
-  document.getElementById("result").classList.remove("hidden");
-  document.getElementById("result-text").innerHTML = text.replace(/\n/g, "<br>");
-  drawRadar(scores);
-}
-
-// 雷達圖
 function drawRadar(scores) {
   const ctx = document.getElementById("radarChart").getContext("2d");
   if (chartInstance) chartInstance.destroy();
@@ -173,29 +198,21 @@ function drawRadar(scores) {
   });
 }
 
-// 列印
 function printResult() { window.print(); }
 
-// PDF 下載（彩色排版）
 async function downloadPDF() {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF("p", "mm", "a4");
   const filename = document.getElementById("filename").value.trim() || "分析結果.pdf";
-
-  // 把 result 卡片截圖
   const result = document.getElementById("result");
   const canvas = await html2canvas(result, { scale: 2 });
   const imgData = canvas.toDataURL("image/png");
-
-  // 等比例縮放
   const imgWidth = 190;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
   pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
-
   pdf.save(filename.endsWith(".pdf") ? filename : filename + ".pdf");
 }
 
-// 切換模式
 document.getElementById("mode").addEventListener("change", function() {
   if (this.value === "single") {
     document.getElementById("single-inputs").classList.remove("hidden");
