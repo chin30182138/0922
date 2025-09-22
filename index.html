@@ -6,27 +6,81 @@
   <title>六獸 AI 分析系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 text-gray-800 transition-colors duration-300">
 
-  <div class="max-w-5xl mx-auto p-6">
+  <div class="max-w-6xl mx-auto p-6">
     <h1 class="text-3xl font-bold text-center text-purple-700 mb-6">六獸 AI 分析系統</h1>
 
-    <!-- 顏色控制 -->
-    <div class="flex gap-6 mb-6 flex-wrap">
-      <div>
-        <label class="block text-sm font-medium">雷達圖顏色</label>
-        <select id="colorSelect" class="mt-1 p-2 border rounded">
-          <option value="rgba(255,99,132,0.5)">紅色</option>
-          <option value="rgba(54,162,235,0.5)">藍色</option>
-          <option value="rgba(75,192,192,0.5)">綠色</option>
-          <option value="rgba(255,206,86,0.5)">黃色</option>
-          <option value="rgba(153,102,255,0.5)">紫色</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium">背景顏色</label>
-        <input type="color" id="bgPicker" value="#fff0f5" class="mt-1 h-10 w-20 border rounded">
+    <!-- 模式切換 -->
+    <div class="flex justify-center gap-4 mb-6">
+      <button onclick="switchMode('single')" id="btnSingle" class="px-4 py-2 bg-indigo-500 text-white rounded shadow">單人模式</button>
+      <button onclick="switchMode('dual')" id="btnDual" class="px-4 py-2 bg-gray-300 text-black rounded shadow">雙人模式</button>
+    </div>
+
+    <!-- 單人輸入 -->
+    <div id="singleMode" class="bg-white shadow rounded p-4 mb-6">
+      <h2 class="font-bold mb-2 text-blue-600">單人分析</h2>
+      <label class="block mb-1">六獸</label>
+      <select id="singleBeast" class="w-full border p-2 rounded mb-2">
+        <option>青龍</option><option>朱雀</option><option>勾陳</option>
+        <option>螣蛇</option><option>白虎</option><option>玄武</option>
+      </select>
+      <label class="block mb-1">六親</label>
+      <select id="singleKin" class="w-full border p-2 rounded mb-2">
+        <option>父母</option><option>兄弟</option><option>子孫</option>
+        <option>妻財</option><option>官鬼</option>
+      </select>
+      <label class="block mb-1">地支</label>
+      <select id="singleBranch" class="w-full border p-2 rounded">
+        <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+        <option>辰</option><option>巳</option><option>午</option><option>未</option>
+        <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+      </select>
+    </div>
+
+    <!-- 雙人輸入 -->
+    <div id="dualMode" class="bg-white shadow rounded p-4 mb-6 hidden">
+      <h2 class="font-bold mb-2 text-pink-600">雙人分析</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block mb-1">甲方六獸</label>
+          <select id="aBeast" class="w-full border p-2 rounded mb-2">
+            <option>青龍</option><option>朱雀</option><option>勾陳</option>
+            <option>螣蛇</option><option>白虎</option><option>玄武</option>
+          </select>
+          <label class="block mb-1">甲方六親</label>
+          <select id="aKin" class="w-full border p-2 rounded mb-2">
+            <option>父母</option><option>兄弟</option><option>子孫</option>
+            <option>妻財</option><option>官鬼</option>
+          </select>
+          <label class="block mb-1">甲方地支</label>
+          <select id="aBranch" class="w-full border p-2 rounded">
+            <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+            <option>辰</option><option>巳</option><option>午</option><option>未</option>
+            <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+          </select>
+        </div>
+        <div>
+          <label class="block mb-1">乙方六獸</label>
+          <select id="bBeast" class="w-full border p-2 rounded mb-2">
+            <option>青龍</option><option>朱雀</option><option>勾陳</option>
+            <option>螣蛇</option><option>白虎</option><option>玄武</option>
+          </select>
+          <label class="block mb-1">乙方六親</label>
+          <select id="bKin" class="w-full border p-2 rounded mb-2">
+            <option>父母</option><option>兄弟</option><option>子孫</option>
+            <option>妻財</option><option>官鬼</option>
+          </select>
+          <label class="block mb-1">乙方地支</label>
+          <select id="bBranch" class="w-full border p-2 rounded">
+            <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+            <option>辰</option><option>巳</option><option>午</option><option>未</option>
+            <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -38,22 +92,33 @@
       <button onclick="analyze('個性')" class="px-4 py-2 bg-purple-600 text-white rounded">個性分析</button>
     </div>
 
-    <!-- 分析內容 -->
+    <!-- 分析結果 -->
     <div id="analysisResult" class="bg-white shadow rounded p-6 mb-6 min-h-[200px]"></div>
 
     <!-- 雷達圖 -->
-    <div class="bg-white shadow rounded p-6">
+    <div class="bg-white shadow rounded p-6 mb-6">
       <canvas id="radarChart"></canvas>
     </div>
 
-    <!-- 列印 -->
-    <div class="mt-6 text-center">
+    <!-- 功能 -->
+    <div class="mt-6 text-center flex gap-4 justify-center">
       <button onclick="window.print()" class="px-6 py-2 bg-green-600 text-white rounded shadow">列印結果</button>
+      <button onclick="downloadPDF()" class="px-6 py-2 bg-indigo-600 text-white rounded shadow">下載 PDF</button>
     </div>
   </div>
 
   <script>
-    // 預設雷達圖
+    let currentMode = "single";
+
+    function switchMode(mode) {
+      currentMode = mode;
+      document.getElementById("singleMode").classList.toggle("hidden", mode !== "single");
+      document.getElementById("dualMode").classList.toggle("hidden", mode !== "dual");
+      document.getElementById("btnSingle").className = mode === "single" ? "px-4 py-2 bg-indigo-500 text-white rounded shadow" : "px-4 py-2 bg-gray-300 text-black rounded shadow";
+      document.getElementById("btnDual").className = mode === "dual" ? "px-4 py-2 bg-indigo-500 text-white rounded shadow" : "px-4 py-2 bg-gray-300 text-black rounded shadow";
+    }
+
+    // 雷達圖
     const ctx = document.getElementById('radarChart').getContext('2d');
     const radarChart = new Chart(ctx, {
       type: 'radar',
@@ -70,39 +135,35 @@
       options: {
         responsive: true,
         animation: { duration: 1500, easing: "easeOutQuart" },
-        scales: {
-          r: { min: 0, max: 10, ticks: { stepSize: 1 } }
-        }
+        scales: { r: { min: 0, max: 10, ticks: { stepSize: 1 } } }
       }
     });
 
-    // 改雷達圖顏色
-    document.getElementById("colorSelect").addEventListener("change", (e) => {
-      const color = e.target.value;
-      radarChart.data.datasets[0].backgroundColor = color;
-      radarChart.data.datasets[0].borderColor = color.replace("0.5", "1");
-      radarChart.update();
-    });
-
-    // 改背景顏色
-    document.getElementById("bgPicker").addEventListener("input", (e) => {
-      document.body.style.background = e.target.value;
-    });
-
-    // 呼叫 API
     async function analyze(type) {
       document.getElementById("analysisResult").innerHTML = `<p class="text-gray-500">分析中...請稍候</p>`;
-      
+      const body = { context: type, mode: currentMode };
+
+      if (currentMode === "single") {
+        body.singleBeast = document.getElementById("singleBeast").value;
+        body.singleKin = document.getElementById("singleKin").value;
+        body.singleBranch = document.getElementById("singleBranch").value;
+      } else {
+        body.aBeast = document.getElementById("aBeast").value;
+        body.aKin = document.getElementById("aKin").value;
+        body.aBranch = document.getElementById("aBranch").value;
+        body.bBeast = document.getElementById("bBeast").value;
+        body.bKin = document.getElementById("bKin").value;
+        body.bBranch = document.getElementById("bBranch").value;
+      }
+
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ context: type })
+        body: JSON.stringify(body)
       });
       const data = await response.json();
 
       document.getElementById("analysisResult").innerHTML = data.text;
-
-      // 更新雷達圖數據
       radarChart.data.datasets[0].data = [
         data.scores["情感"],
         data.scores["事業"],
@@ -111,6 +172,19 @@
         data.scores["智慧"]
       ];
       radarChart.update();
+    }
+
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF("p", "mm", "a4");
+      const analysis = document.getElementById("analysisResult");
+      const text = analysis.innerText;
+      const lines = doc.splitTextToSize(text, 180);
+      doc.text(lines, 15, 20);
+      const canvas = document.getElementById("radarChart");
+      const imgData = canvas.toDataURL("image/png", 1.0);
+      doc.addImage(imgData, "PNG", 15, 120, 180, 120);
+      doc.save("六獸分析.pdf");
     }
   </script>
 </body>
