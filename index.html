@@ -6,6 +6,7 @@
   <title>六獸個性預測分析</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
@@ -33,28 +34,34 @@
     <!-- 單人輸入 -->
     <div id="single-inputs" class="mb-4">
       <select id="aBeast" class="border rounded p-2 mr-2">
-        <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
+        <option>青龍</option><option>朱雀</option><option>勾陳</option>
+        <option>螣蛇</option><option>白虎</option><option>玄武</option>
       </select>
       <select id="aKin" class="border rounded p-2 mr-2">
-        <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
+        <option>父母</option><option>兄弟</option><option>子孫</option>
+        <option>妻財</option><option>官鬼</option>
       </select>
       <select id="aBranch" class="border rounded p-2 mr-2">
-        <option>子</option><option>丑</option><option>寅</option><option>卯</option><option>辰</option><option>巳</option>
-        <option>午</option><option>未</option><option>申</option><option>酉</option><option>戌</option><option>亥</option>
+        <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+        <option>辰</option><option>巳</option><option>午</option><option>未</option>
+        <option>申</option><option>酉</option><option>戌</option><option>亥</option>
       </select>
     </div>
 
     <!-- 雙人輸入 -->
     <div id="double-inputs" class="mb-4 hidden">
       <select id="bBeast" class="border rounded p-2 mr-2">
-        <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
+        <option>青龍</option><option>朱雀</option><option>勾陳</option>
+        <option>螣蛇</option><option>白虎</option><option>玄武</option>
       </select>
       <select id="bKin" class="border rounded p-2 mr-2">
-        <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
+        <option>父母</option><option>兄弟</option><option>子孫</option>
+        <option>妻財</option><option>官鬼</option>
       </select>
       <select id="bBranch" class="border rounded p-2 mr-2">
-        <option>子</option><option>丑</option><option>寅</option><option>卯</option><option>辰</option><option>巳</option>
-        <option>午</option><option>未</option><option>申</option><option>酉</option><option>戌</option><option>亥</option>
+        <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+        <option>辰</option><option>巳</option><option>午</option><option>未</option>
+        <option>申</option><option>酉</option><option>戌</option><option>亥</option>
       </select>
     </div>
 
@@ -120,7 +127,6 @@
 let chartInstance = null;
 let multiResults = [];
 
-// 分析流程
 async function startAnalysis(multi = false) {
   document.getElementById("progress").classList.remove("hidden");
   updateProgress(0);
@@ -159,7 +165,7 @@ async function startAnalysis(multi = false) {
     const container = document.getElementById("result-text");
     container.innerHTML = "";
     multiResults.forEach((r, i) => {
-      container.innerHTML += `<h3 class="text-lg font-bold text-purple-600 mt-4">${r.context} 分析</h3><p>${r.text.replace(/\n/g,"<br>")}</p>`;
+      container.innerHTML += `<h3 class="text-lg font-bold text-purple-600 mt-4">${r.context} 分析</h3><div>${r.text}</div>`;
     });
     drawRadar(multiResults[0].scores);
 
@@ -175,7 +181,7 @@ async function startAnalysis(multi = false) {
     switchDiv.classList.remove("hidden");
 
   } else if (data.text) {
-    document.getElementById("result-text").innerHTML = data.text.replace(/\n/g,"<br>");
+    document.getElementById("result-text").innerHTML = data.text;
     drawRadar(data.scores);
     document.getElementById("radar-switch").classList.add("hidden");
   }
@@ -187,12 +193,13 @@ function updateProgress(value) {
   bar.innerText = value + "%";
 }
 
-// 雷達圖（含動畫效果）
+// 雷達圖 + 數值標籤
 function drawRadar(scores) {
   const ctx = document.getElementById("radarChart").getContext("2d");
   if (chartInstance) chartInstance.destroy();
   const labels = ["情感", "事業", "健康", "財運", "智慧"];
   const values = labels.map(l => scores && scores[l] ? scores[l] : 0);
+
   chartInstance = new Chart(ctx, {
     type: "radar",
     data: {
@@ -213,8 +220,17 @@ function drawRadar(scores) {
         duration: 2000,
         easing: 'easeOutElastic'
       },
-      scales: { r: { beginAtZero: true, max: 10 } }
-    }
+      scales: { r: { beginAtZero: true, max: 10 } },
+      plugins: {
+        legend: { labels: { color: "#374151" } },
+        datalabels: {
+          color: '#111',
+          font: { weight: 'bold' },
+          formatter: (value) => value
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
   });
 }
 
