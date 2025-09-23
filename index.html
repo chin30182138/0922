@@ -28,7 +28,6 @@
 
       <!-- 選單區 -->
       <div id="inputArea" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- 單人 -->
         <div>
           <label class="font-bold">六親</label>
           <select id="kinA" class="w-full border p-2 rounded">
@@ -48,7 +47,6 @@
           </select>
         </div>
 
-        <!-- 雙人 -->
         <div id="doubleInputs" class="hidden">
           <label class="font-bold">六親</label>
           <select id="kinB" class="w-full border p-2 rounded">
@@ -158,6 +156,7 @@
           });
           const data = await res.json();
           document.getElementById("result").innerHTML = data.text;
+
           radarChart.data.datasets[0].data = data.scores;
           radarChart.update();
         } catch (e) {
