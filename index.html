@@ -1,103 +1,189 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>新版分析介面</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>六獸分析系統</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; margin: 20px; }
-    label { display: block; margin: 10px 0 5px; }
-    select, button { padding: 5px; margin-right: 5px; }
-    #result { margin-top: 20px; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; }
+    @media print {
+      body { background:#fff !important; }
+      .no-print { display:none !important; }
+    }
   </style>
 </head>
-<body>
-  <h1>這是新版分析介面</h1>
-  
-  <form id="analyzeForm">
-    <label>六獸 (beast)</label>
-    <select id="beast" required>
-      <option value="">請選擇</option>
-      <option value="青龍">青龍</option>
-      <option value="朱雀">朱雀</option>
-      <option value="勾陳">勾陳</option>
-      <option value="螣蛇">螣蛇</option>
-      <option value="白虎">白虎</option>
-      <option value="玄武">玄武</option>
-    </select>
+<body class="bg-gray-50 text-gray-800">
 
-    <label>六親 (kin)</label>
-    <select id="kin" required>
-      <option value="">請選擇</option>
-      <option value="父母">父母</option>
-      <option value="兄弟">兄弟</option>
-      <option value="子孫">子孫</option>
-      <option value="妻財">妻財</option>
-      <option value="官鬼">官鬼</option>
-    </select>
+  <div class="p-6 max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">六獸 × 六親 × 地支 分析系統</h1>
 
-    <label>地支 (branch)</label>
-    <select id="branch" required>
-      <option value="">請選擇</option>
-      <option value="子">子</option><option value="丑">丑</option><option value="寅">寅</option><option value="卯">卯</option>
-      <option value="辰">辰</option><option value="巳">巳</option><option value="午">午</option><option value="未">未</option>
-      <option value="申">申</option><option value="酉">酉</option><option value="戌">戌</option><option value="亥">亥</option>
-    </select>
-
-    <label>情境 (context)</label>
-    <select id="context" required>
-      <option value="">請選擇</option>
-      <option value="個性分析">個性分析</option>
-      <option value="愛情">愛情</option>
-      <option value="性愛">性愛</option>
-      <option value="跨部門協作">跨部門協作</option>
-      <option value="壓期交付專案">壓期交付專案</option>
-    </select>
-
-    <div style="margin-top: 15px;">
-      <button type="submit">送出分析</button>
-      <button type="button" id="testBtn">一鍵測試</button>
+    <!-- 模式切換 -->
+    <div class="mb-4">
+      <label class="mr-2 font-bold">分析模式：</label>
+      <select id="mode" class="border rounded p-2">
+        <option value="single">單人分析</option>
+        <option value="dual">雙人分析</option>
+      </select>
     </div>
-  </form>
 
-  <div id="result"></div>
+    <!-- 人物 A -->
+    <div class="grid grid-cols-3 gap-2 mb-4">
+      <div>
+        <label>六獸(A)</label>
+        <select id="aBeast" class="w-full border rounded p-2">
+          <option>青龍</option><option>朱雀</option><option>勾陳</option>
+          <option>螣蛇</option><option>白虎</option><option>玄武</option>
+        </select>
+      </div>
+      <div>
+        <label>六親(A)</label>
+        <select id="aKin" class="w-full border rounded p-2">
+          <option>父母</option><option>兄弟</option><option>子孫</option>
+          <option>妻財</option><option>官鬼</option>
+        </select>
+      </div>
+      <div>
+        <label>地支(A)</label>
+        <select id="aBranch" class="w-full border rounded p-2">
+          <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+          <option>辰</option><option>巳</option><option>午</option><option>未</option>
+          <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+        </select>
+      </div>
+    </div>
 
-  <script>
-    async function callAPI(body) {
-      const resultDiv = document.getElementById("result");
-      resultDiv.textContent = "分析中...";
-      try {
-        const res = await fetch("/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        resultDiv.textContent = data.text || JSON.stringify(data, null, 2);
-      } catch (err) {
-        resultDiv.textContent = "發生錯誤：" + err.message;
-      }
+    <!-- 人物 B -->
+    <div id="dualFields" class="grid grid-cols-3 gap-2 mb-4 hidden">
+      <div>
+        <label>六獸(B)</label>
+        <select id="bBeast" class="w-full border rounded p-2">
+          <option>青龍</option><option>朱雀</option><option>勾陳</option>
+          <option>螣蛇</option><option>白虎</option><option>玄武</option>
+        </select>
+      </div>
+      <div>
+        <label>六親(B)</label>
+        <select id="bKin" class="w-full border rounded p-2">
+          <option>父母</option><option>兄弟</option><option>子孫</option>
+          <option>妻財</option><option>官鬼</option>
+        </select>
+      </div>
+      <div>
+        <label>地支(B)</label>
+        <select id="bBranch" class="w-full border rounded p-2">
+          <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+          <option>辰</option><option>巳</option><option>午</option><option>未</option>
+          <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 情境選單 -->
+    <div class="mb-4">
+      <label class="mr-2 font-bold">情境：</label>
+      <select id="context" class="border rounded p-2">
+        <option>職場互動</option>
+        <option>愛情</option>
+        <option>性愛</option>
+        <option>健康</option>
+      </select>
+    </div>
+
+    <!-- 功能按鈕 -->
+    <div class="mb-4 space-x-2">
+      <button onclick="runAnalyze()" class="px-4 py-2 bg-blue-600 text-white rounded">開始分析</button>
+      <button onclick="toggleBg()" class="px-4 py-2 bg-gray-600 text-white rounded">切換背景</button>
+      <button onclick="window.print()" class="px-4 py-2 bg-green-600 text-white rounded no-print">列印</button>
+    </div>
+
+    <!-- 分析結果 -->
+    <div id="result" class="p-4 border rounded bg-white">
+      <h2 class="text-xl font-bold mb-2">分析結果：</h2>
+      <pre id="output" class="whitespace-pre-wrap"></pre>
+      <div id="healthTips" class="mt-4 text-red-700 font-semibold"></div>
+      <canvas id="radarChart" class="mt-4"></canvas>
+    </div>
+  </div>
+
+<script>
+let bgToggle = false;
+
+// 模式切換 → 顯示/隱藏人物B
+document.getElementById("mode").addEventListener("change", e=>{
+  document.getElementById("dualFields").style.display = 
+    e.target.value === "dual" ? "grid" : "none";
+});
+
+// 切換背景顏色
+function toggleBg(){
+  bgToggle = !bgToggle;
+  document.body.className = bgToggle ? "bg-yellow-100" : "bg-gray-50";
+}
+
+// 執行分析
+async function runAnalyze(){
+  const mode = document.getElementById("mode").value;
+  const context = document.getElementById("context").value;
+
+  const data = {
+    mode,
+    aBeast: document.getElementById("aBeast").value,
+    aKin: document.getElementById("aKin").value,
+    aBranch: document.getElementById("aBranch").value,
+    bBeast: document.getElementById("bBeast")?.value,
+    bKin: document.getElementById("bKin")?.value,
+    bBranch: document.getElementById("bBranch")?.value,
+    context
+  };
+
+  const res = await fetch("/api/analyze", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(data)
+  });
+  const json = await res.json();
+  document.getElementById("output").textContent = json.text || JSON.stringify(json);
+
+  // 顯示健康建議
+  if(context === "健康"){
+    const branch = document.getElementById("aBranch").value;
+    let tips = "💡 健康湯藥建議：";
+    if(["子","亥"].includes(branch)) tips += " 腎水偏弱，可用《安迪湯》《六味地黃丸》補腎。";
+    else if(["寅","卯"].includes(branch)) tips += " 木氣不足，可用《四神湯》《加味逍遙散》調肝脾。";
+    else if(["巳","午"].includes(branch)) tips += " 火氣旺，可用《酸棗仁湯》《清心蓮子飲》養心安神。";
+    else if(["申","酉"].includes(branch)) tips += " 金氣偏弱，可用《桑菊飲》《銀翹散》護肺氣。";
+    else if(["丑","辰","未","戌"].includes(branch)) tips += " 土氣不足，可用《補中益氣湯》《香砂六君子湯》健脾胃。";
+    document.getElementById("healthTips").textContent = tips;
+  } else {
+    document.getElementById("healthTips").textContent = "";
+  }
+
+  // 雷達圖：雙人模式才顯示
+  if(mode==="dual" && json.scores){
+    renderRadar(json.scores);
+  }
+}
+
+let radarChart;
+function renderRadar(scores){
+  const ctx = document.getElementById("radarChart").getContext("2d");
+  if(radarChart) radarChart.destroy();
+  radarChart = new Chart(ctx, {
+    type:"radar",
+    data:{
+      labels:["契合","溝通","節奏","責任","信任","創新"],
+      datasets:[{
+        label:"雙人互動分數",
+        data:[scores.fit, scores.comm, scores.pace, scores.account, scores.trust, scores.innov],
+        fill:true,
+        borderColor:"rgb(54,162,235)",
+        backgroundColor:"rgba(54,162,235,0.2)"
+      }]
     }
+  });
+}
+</script>
 
-    // 表單送出
-    document.getElementById("analyzeForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      callAPI({
-        beast: document.getElementById("beast").value,
-        kin: document.getElementById("kin").value,
-        branch: document.getElementById("branch").value,
-        context: document.getElementById("context").value
-      });
-    });
-
-    // 一鍵測試
-    document.getElementById("testBtn").addEventListener("click", () => {
-      callAPI({
-        beast: "青龍",
-        kin: "妻財",
-        branch: "子",
-        context: "愛情"
-      });
-    });
-  </script>
 </body>
 </html>
