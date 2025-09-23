@@ -1,7 +1,6 @@
 // ===============================
-// 後端 API: analyze.js
-// 路徑： /api/analyze.js
-// 功能：接收前端送來的 JSON，呼叫 OpenAI API，回傳格式化分析結果
+// 後端 API: analyze.js (最終版)
+// 放在 /api/analyze.js
 // ===============================
 
 import OpenAI from "openai";
@@ -16,114 +15,107 @@ export default async function handler(req, res) {
 
     const { type, mode, aKin, aBeast, aBranch, bKin, bBeast, bBranch } = req.body ?? {};
 
-    // 分析場景的提示詞
+    // 四大情境模板
     const prompts = {
       personality: `
-你是一位專業卜卦與人格分析師，根據輸入的六親、六獸、地支，產出完整的「個性分析」。
-請依下列格式輸出：
+你是一位專業卜卦與人格分析師，請依以下輸入進行完整分析：
+六親：${aKin}
+六獸：${aBeast}
+地支：${aBranch}
 
-【個性特徵】
-- 六親：${aKin}
-- 六獸：${aBeast}
-- 地支：${aBranch}
-【詳細描述】
-請描述此組合的個性特徵、優點、缺點，以及在生活與人際上的表現。
+請輸出 JSON 格式：
+{
+  "analysis": "【個性特徵】...【詳細描述】...",
+  "radar": {
+    "智慧": 整數0-100,
+    "情感": 整數0-100,
+    "行動力": 整數0-100,
+    "合作": 整數0-100,
+    "領導": 整數0-100
+  },
+  "quote": "一句正向金句"
+}
 `,
 
       career: `
-你是一位職場管理顧問，根據上下屬的六親、六獸、地支，產出「職場互動分析」。
-請依以下格式輸出：
+你是一位職場顧問，請根據上下屬六親六獸地支進行「職場互動分析」：
+上司：${aBeast}${aBranch} (${aKin})
+下屬：${bBeast}${bBranch} (${bKin})
 
-🐉 ${aBeast}${aBranch}上司 VS ${bBeast}${bBranch}下屬
-雙層角色設定
-• 上司特質：
-• 下屬特質：
-互動模式分析
-• ...
-高危衝突點
-• ...
-雙向應對策略
-✅ 上司版：
-1.
-2.
-✅ 下屬版：
-1.
-2.
-情境對話
-上司：「...」
-下屬：「...」
-經典避坑提醒
-• ...
+請輸出 JSON 格式：
+{
+  "analysis": "🐉 ${aBeast}${aBranch}上司 VS ${bBeast}${bBranch}下屬\n雙層角色設定...\n互動模式分析...\n高危衝突點...\n雙向應對策略...\n情境對話...\n經典避坑提醒...",
+  "radar": {
+    "智慧": 整數0-100,
+    "情感": 整數0-100,
+    "行動力": 整數0-100,
+    "合作": 整數0-100,
+    "領導": 整數0-100
+  },
+  "quote": "一句正向金句"
+}
 `,
 
       love: `
-你是一位情感顧問，根據雙方六親、六獸、地支，產出「愛情互動分析」。
-請依以下格式輸出：
+你是一位情感顧問，請根據雙方六親六獸地支進行「愛情互動分析」：
+一方：${aBeast}${aBranch} (${aKin})
+另一方：${bBeast}${bBranch} (${bKin})
 
-💖 ${aBeast}${aBranch} 與 ${bBeast}${bBranch}
-愛情特質：
-互動模式：
-可能的挑戰：
-維繫建議：
-情感小劇場：
+請輸出 JSON 格式：
+{
+  "analysis": "💖 ${aBeast}${aBranch} 與 ${bBeast}${bBranch}\n愛情特質...\n互動模式...\n挑戰...\n維繫建議...\n情感小劇場...",
+  "radar": {
+    "智慧": 整數0-100,
+    "情感": 整數0-100,
+    "行動力": 整數0-100,
+    "合作": 整數0-100,
+    "領導": 整數0-100
+  },
+  "quote": "一句正向金句"
+}
 `,
 
       sex: `
-你是一位性愛心理學顧問，根據雙方六親、六獸、地支，產出「性愛分析」。
-請依以下格式輸出：
+你是一位性愛心理學顧問，請根據雙方六親六獸地支進行「性愛互動分析」：
+一方：${aBeast}${aBranch} (${aKin})
+另一方：${bBeast}${bBranch} (${bKin})
 
-🔥 ${aBeast}${aBranch} X ${bBeast}${bBranch}
-• 情愛指數：X/10
-• 互動模式：
-• 雷點分析：
-• 最佳性愛劇本推薦：
-• 推薦體位：
-• 推薦口交技巧：
-• 推薦情趣內衣與服裝：
-• 推薦玩具：
-• 推薦性愛場景：
+請輸出 JSON 格式：
+{
+  "analysis": "🔥 ${aBeast}${aBranch} X ${bBeast}${bBranch}\n情愛指數...\n互動模式...\n雷點分析...\n最佳性愛劇本推薦...\n推薦體位...\n推薦技巧...\n推薦服裝...\n推薦玩具...\n推薦場景...",
+  "radar": {
+    "智慧": 整數0-100,
+    "情感": 整數0-100,
+    "行動力": 整數0-100,
+    "合作": 整數0-100,
+    "領導": 整數0-100
+  },
+  "quote": "一句正向金句"
+}
 `
     };
 
-    // 選擇提示
     const prompt = prompts[type] || prompts["personality"];
 
-    // 呼叫 OpenAI
+    // 呼叫 OpenAI，要求直接回傳 JSON
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "你是專業卜卦分析與顧問，請依指定格式回覆。" },
+        { role: "system", content: "你是專業卜卦顧問，請務必輸出符合 JSON 格式的內容。" },
         { role: "user", content: prompt }
-      ]
+      ],
+      temperature: 0.7
     });
 
-    const analysis = completion.choices[0].message.content;
+    let data;
+    try {
+      data = JSON.parse(completion.choices[0].message.content);
+    } catch (e) {
+      console.error("JSON 解析失敗", completion.choices[0].message.content);
+      return res.status(500).json({ error: "JSON 解析失敗", raw: completion.choices[0].message.content });
+    }
 
-    // 雷達圖數據（簡單模擬：5 個面向，隨機生成或未來可改由 AI 回傳）
-    const radar = {
-      智慧: Math.floor(Math.random() * 40) + 60,
-      情感: Math.floor(Math.random() * 40) + 60,
-      行動力: Math.floor(Math.random() * 40) + 60,
-      合作: Math.floor(Math.random() * 40) + 60,
-      領導: Math.floor(Math.random() * 40) + 60,
-    };
-
-    // 正向金句（AI 生成一條鼓勵話）
-    const quoteResult = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "你是一位正向教練，請給一句鼓勵人心的金句。" },
-        { role: "user", content: "請針對剛剛的分析，挑一個適合的正向鼓勵語。" }
-      ]
-    });
-
-    const quote = quoteResult.choices[0].message.content;
-
-    res.status(200).json({
-      analysis,
-      radar,
-      quote
-    });
+    res.status(200).json(data);
 
   } catch (err) {
     console.error("分析失敗：", err);
