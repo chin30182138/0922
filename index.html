@@ -1,182 +1,103 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>仙人指路 六獸個性分析</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <meta charset="UTF-8">
+  <title>新版分析介面</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    label { display: block; margin: 10px 0 5px; }
+    select, button { padding: 5px; margin-right: 5px; }
+    #result { margin-top: 20px; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body>
+  <h1>這是新版分析介面</h1>
+  
+  <form id="analyzeForm">
+    <label>六獸 (beast)</label>
+    <select id="beast" required>
+      <option value="">請選擇</option>
+      <option value="青龍">青龍</option>
+      <option value="朱雀">朱雀</option>
+      <option value="勾陳">勾陳</option>
+      <option value="螣蛇">螣蛇</option>
+      <option value="白虎">白虎</option>
+      <option value="玄武">玄武</option>
+    </select>
 
-  <!-- Header -->
-  <header class="p-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white text-center text-2xl font-bold">
-    仙人指路 占卜研究學會｜六獸個性分析
-  </header>
+    <label>六親 (kin)</label>
+    <select id="kin" required>
+      <option value="">請選擇</option>
+      <option value="父母">父母</option>
+      <option value="兄弟">兄弟</option>
+      <option value="子孫">子孫</option>
+      <option value="妻財">妻財</option>
+      <option value="官鬼">官鬼</option>
+    </select>
 
-  <main class="flex-1 p-6 space-y-6">
-    <div class="bg-white shadow rounded-lg p-6 space-y-4">
+    <label>地支 (branch)</label>
+    <select id="branch" required>
+      <option value="">請選擇</option>
+      <option value="子">子</option><option value="丑">丑</option><option value="寅">寅</option><option value="卯">卯</option>
+      <option value="辰">辰</option><option value="巳">巳</option><option value="午">午</option><option value="未">未</option>
+      <option value="申">申</option><option value="酉">酉</option><option value="戌">戌</option><option value="亥">亥</option>
+    </select>
 
-      <!-- 單人 / 雙人切換 -->
-      <div class="flex gap-4">
-        <button id="singleBtn" class="px-4 py-2 bg-blue-500 text-white rounded">單人模式</button>
-        <button id="doubleBtn" class="px-4 py-2 bg-purple-500 text-white rounded">雙人模式</button>
-      </div>
+    <label>情境 (context)</label>
+    <select id="context" required>
+      <option value="">請選擇</option>
+      <option value="個性分析">個性分析</option>
+      <option value="愛情">愛情</option>
+      <option value="性愛">性愛</option>
+      <option value="跨部門協作">跨部門協作</option>
+      <option value="壓期交付專案">壓期交付專案</option>
+    </select>
 
-      <!-- 選單區 -->
-      <div id="inputArea" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="font-bold">六親</label>
-          <select id="kinA" class="w-full border p-2 rounded">
-            <option>父母</option><option>兄弟</option><option>子孫</option>
-            <option>妻財</option><option>官鬼</option>
-          </select>
-          <label class="font-bold mt-2 block">六獸</label>
-          <select id="beastA" class="w-full border p-2 rounded">
-            <option>青龍</option><option>朱雀</option><option>勾陳</option>
-            <option>螣蛇</option><option>白虎</option><option>玄武</option>
-          </select>
-          <label class="font-bold mt-2 block">地支</label>
-          <select id="branchA" class="w-full border p-2 rounded">
-            <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-            <option>辰</option><option>巳</option><option>午</option><option>未</option>
-            <option>申</option><option>酉</option><option>戌</option><option>亥</option>
-          </select>
-        </div>
-
-        <div id="doubleInputs" class="hidden">
-          <label class="font-bold">六親</label>
-          <select id="kinB" class="w-full border p-2 rounded">
-            <option>父母</option><option>兄弟</option><option>子孫</option>
-            <option>妻財</option><option>官鬼</option>
-          </select>
-          <label class="font-bold mt-2 block">六獸</label>
-          <select id="beastB" class="w-full border p-2 rounded">
-            <option>青龍</option><option>朱雀</option><option>勾陳</option>
-            <option>螣蛇</option><option>白虎</option><option>玄武</option>
-          </select>
-          <label class="font-bold mt-2 block">地支</label>
-          <select id="branchB" class="w-full border p-2 rounded">
-            <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-            <option>辰</option><option>巳</option><option>午</option><option>未</option>
-            <option>申</option><option>酉</option><option>戌</option><option>亥</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- 情境分析 -->
-      <div class="flex flex-wrap gap-2">
-        <button class="sceneBtn bg-green-500 text-white px-3 py-2 rounded" data-scene="work">職場分析</button>
-        <button class="sceneBtn bg-pink-500 text-white px-3 py-2 rounded" data-scene="love">愛情分析</button>
-        <button class="sceneBtn bg-red-500 text-white px-3 py-2 rounded" data-scene="sex">性愛分析</button>
-        <button class="sceneBtn bg-indigo-500 text-white px-3 py-2 rounded" data-scene="social">人際分析</button>
-        <button class="sceneBtn bg-gray-700 text-white px-3 py-2 rounded" data-scene="personality">個性分析</button>
-      </div>
-
-      <!-- 進度條 -->
-      <div class="w-full bg-gray-200 rounded-full h-4 mt-4">
-        <div id="progressBar" class="h-4 rounded-full bg-gradient-to-r from-blue-400 to-green-400 w-0"></div>
-      </div>
-
-      <!-- 雷達圖 -->
-      <canvas id="radarChart" class="mt-6"></canvas>
-
-      <!-- 分析結果 -->
-      <div id="result" class="mt-6 p-4 bg-gray-50 rounded shadow text-sm leading-relaxed"></div>
-
-      <!-- 輸出功能 -->
-      <div class="flex gap-3 mt-6">
-        <button id="printBtn" class="px-4 py-2 bg-yellow-500 text-white rounded">列印</button>
-        <button id="pdfBtn" class="px-4 py-2 bg-purple-600 text-white rounded">下載 PDF</button>
-      </div>
+    <div style="margin-top: 15px;">
+      <button type="submit">送出分析</button>
+      <button type="button" id="testBtn">一鍵測試</button>
     </div>
-  </main>
+  </form>
 
-  <footer class="p-4 text-center text-xs text-gray-500">
-    系統製作：仙人指路占卜研究學會 阿青師
-  </footer>
+  <div id="result"></div>
 
   <script>
-    const singleBtn = document.getElementById("singleBtn");
-    const doubleBtn = document.getElementById("doubleBtn");
-    const doubleInputs = document.getElementById("doubleInputs");
-    let mode = "single";
+    async function callAPI(body) {
+      const resultDiv = document.getElementById("result");
+      resultDiv.textContent = "分析中...";
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        resultDiv.textContent = data.text || JSON.stringify(data, null, 2);
+      } catch (err) {
+        resultDiv.textContent = "發生錯誤：" + err.message;
+      }
+    }
 
-    singleBtn.onclick = () => { mode = "single"; doubleInputs.classList.add("hidden"); };
-    doubleBtn.onclick = () => { mode = "double"; doubleInputs.classList.remove("hidden"); };
-
-    const ctx = document.getElementById("radarChart");
-    const radarChart = new Chart(ctx, {
-      type: 'radar',
-      data: {
-        labels: ["情感", "信任", "衝突", "合作", "成長"],
-        datasets: [{
-          label: "分數",
-          data: [0,0,0,0,0],
-          fill: true,
-          backgroundColor: "rgba(34,197,94,0.2)",
-          borderColor: "rgba(34,197,94,1)",
-          pointBackgroundColor: "rgba(34,197,94,1)"
-        }]
-      },
-      options: { scales: { r: { beginAtZero: true, max: 10 } } }
-    });
-
-    document.querySelectorAll(".sceneBtn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        document.getElementById("progressBar").style.width = "0%";
-        let width = 0;
-        const loader = setInterval(() => {
-          if (width >= 100) clearInterval(loader);
-          else {
-            width++;
-            document.getElementById("progressBar").style.width = width + "%";
-          }
-        }, 30);
-
-        const payload = {
-          mode,
-          aKin: document.getElementById("kinA").value,
-          aBeast: document.getElementById("beastA").value,
-          aBranch: document.getElementById("branchA").value,
-          bKin: mode === "double" ? document.getElementById("kinB").value : null,
-          bBeast: mode === "double" ? document.getElementById("beastB").value : null,
-          bBranch: mode === "double" ? document.getElementById("branchB").value : null,
-          scene: btn.dataset.scene
-        };
-
-        try {
-          const res = await fetch("/api/analyze", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-          document.getElementById("result").innerHTML = data.text;
-
-          radarChart.data.datasets[0].data = data.scores;
-          radarChart.update();
-        } catch (e) {
-          document.getElementById("result").innerHTML = "⚠ API 失敗，顯示假資料<br>• 情感 7 • 信任 8 • 衝突 6 • 合作 9 • 成長 7";
-          radarChart.data.datasets[0].data = [7,8,6,9,7];
-          radarChart.update();
-        }
+    // 表單送出
+    document.getElementById("analyzeForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      callAPI({
+        beast: document.getElementById("beast").value,
+        kin: document.getElementById("kin").value,
+        branch: document.getElementById("branch").value,
+        context: document.getElementById("context").value
       });
     });
 
-    document.getElementById("printBtn").onclick = () => window.print();
-
-    document.getElementById("pdfBtn").onclick = async () => {
-      const doc = new jsPDF("p", "pt", "a4");
-      await html2canvas(document.body).then(canvas => {
-        const imgData = canvas.toDataURL("image/png");
-        doc.addImage(imgData, "PNG", 20, 20, 550, 770);
+    // 一鍵測試
+    document.getElementById("testBtn").addEventListener("click", () => {
+      callAPI({
+        beast: "青龍",
+        kin: "妻財",
+        branch: "子",
+        context: "愛情"
       });
-      doc.save("analysis.pdf");
-    };
+    });
   </script>
 </body>
 </html>
