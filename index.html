@@ -8,8 +8,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
+
+  <!-- Header -->
   <header class="p-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white text-center text-2xl font-bold">
     仙人指路 占卜研究學會｜六獸個性分析
   </header>
@@ -29,16 +32,19 @@
         <div>
           <label class="font-bold">六親</label>
           <select id="kinA" class="w-full border p-2 rounded">
-            <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
+            <option>父母</option><option>兄弟</option><option>子孫</option>
+            <option>妻財</option><option>官鬼</option>
           </select>
           <label class="font-bold mt-2 block">六獸</label>
           <select id="beastA" class="w-full border p-2 rounded">
-            <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
+            <option>青龍</option><option>朱雀</option><option>勾陳</option>
+            <option>螣蛇</option><option>白虎</option><option>玄武</option>
           </select>
           <label class="font-bold mt-2 block">地支</label>
           <select id="branchA" class="w-full border p-2 rounded">
-            <option>子</option><option>丑</option><option>寅</option><option>卯</option><option>辰</option><option>巳</option>
-            <option>午</option><option>未</option><option>申</option><option>酉</option><option>戌</option><option>亥</option>
+            <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+            <option>辰</option><option>巳</option><option>午</option><option>未</option>
+            <option>申</option><option>酉</option><option>戌</option><option>亥</option>
           </select>
         </div>
 
@@ -46,16 +52,19 @@
         <div id="doubleInputs" class="hidden">
           <label class="font-bold">六親</label>
           <select id="kinB" class="w-full border p-2 rounded">
-            <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
+            <option>父母</option><option>兄弟</option><option>子孫</option>
+            <option>妻財</option><option>官鬼</option>
           </select>
           <label class="font-bold mt-2 block">六獸</label>
           <select id="beastB" class="w-full border p-2 rounded">
-            <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
+            <option>青龍</option><option>朱雀</option><option>勾陳</option>
+            <option>螣蛇</option><option>白虎</option><option>玄武</option>
           </select>
           <label class="font-bold mt-2 block">地支</label>
           <select id="branchB" class="w-full border p-2 rounded">
-            <option>子</option><option>丑</option><option>寅</option><option>卯</option><option>辰</option><option>巳</option>
-            <option>午</option><option>未</option><option>申</option><option>酉</option><option>戌</option><option>亥</option>
+            <option>子</option><option>丑</option><option>寅</option><option>卯</option>
+            <option>辰</option><option>巳</option><option>午</option><option>未</option>
+            <option>申</option><option>酉</option><option>戌</option><option>亥</option>
           </select>
         </div>
       </div>
@@ -141,16 +150,21 @@
           scene: btn.dataset.scene
         };
 
-        const res = await fetch("/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-
-        document.getElementById("result").innerHTML = data.text;
-        radarChart.data.datasets[0].data = data.scores;
-        radarChart.update();
+        try {
+          const res = await fetch("/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          document.getElementById("result").innerHTML = data.text;
+          radarChart.data.datasets[0].data = data.scores;
+          radarChart.update();
+        } catch (e) {
+          document.getElementById("result").innerHTML = "⚠ API 失敗，顯示假資料<br>• 情感 7 • 信任 8 • 衝突 6 • 合作 9 • 成長 7";
+          radarChart.data.datasets[0].data = [7,8,6,9,7];
+          radarChart.update();
+        }
       });
     });
 
