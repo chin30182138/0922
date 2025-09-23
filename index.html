@@ -6,18 +6,14 @@
   <title>仙人指路 六獸個性分析</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
-
-  <!-- Header -->
-  <header class="p-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white text-center text-2xl font-bold shadow">
+  <header class="p-4 bg-gradient-to-r from-yellow-500 to-red-500 text-white text-center text-2xl font-bold">
     仙人指路 占卜研究學會｜六獸個性分析
   </header>
 
-  <!-- Controls -->
   <main class="flex-1 p-6 space-y-6">
     <div class="bg-white shadow rounded-lg p-6 space-y-4">
 
@@ -33,21 +29,16 @@
         <div>
           <label class="font-bold">六親</label>
           <select id="kinA" class="w-full border p-2 rounded">
-            <option>父母</option><option>兄弟</option><option>子孫</option>
-            <option>妻財</option><option>官鬼</option>
+            <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
           </select>
-
           <label class="font-bold mt-2 block">六獸</label>
           <select id="beastA" class="w-full border p-2 rounded">
-            <option>青龍</option><option>朱雀</option><option>勾陳</option>
-            <option>螣蛇</option><option>白虎</option><option>玄武</option>
+            <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
           </select>
-
           <label class="font-bold mt-2 block">地支</label>
           <select id="branchA" class="w-full border p-2 rounded">
-            <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-            <option>辰</option><option>巳</option><option>午</option><option>未</option>
-            <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+            <option>子</option><option>丑</option><option>寅</option><option>卯</option><option>辰</option><option>巳</option>
+            <option>午</option><option>未</option><option>申</option><option>酉</option><option>戌</option><option>亥</option>
           </select>
         </div>
 
@@ -55,21 +46,16 @@
         <div id="doubleInputs" class="hidden">
           <label class="font-bold">六親</label>
           <select id="kinB" class="w-full border p-2 rounded">
-            <option>父母</option><option>兄弟</option><option>子孫</option>
-            <option>妻財</option><option>官鬼</option>
+            <option>父母</option><option>兄弟</option><option>子孫</option><option>妻財</option><option>官鬼</option>
           </select>
-
           <label class="font-bold mt-2 block">六獸</label>
           <select id="beastB" class="w-full border p-2 rounded">
-            <option>青龍</option><option>朱雀</option><option>勾陳</option>
-            <option>螣蛇</option><option>白虎</option><option>玄武</option>
+            <option>青龍</option><option>朱雀</option><option>勾陳</option><option>螣蛇</option><option>白虎</option><option>玄武</option>
           </select>
-
           <label class="font-bold mt-2 block">地支</label>
           <select id="branchB" class="w-full border p-2 rounded">
-            <option>子</option><option>丑</option><option>寅</option><option>卯</option>
-            <option>辰</option><option>巳</option><option>午</option><option>未</option>
-            <option>申</option><option>酉</option><option>戌</option><option>亥</option>
+            <option>子</option><option>丑</option><option>寅</option><option>卯</option><option>辰</option><option>巳</option>
+            <option>午</option><option>未</option><option>申</option><option>酉</option><option>戌</option><option>亥</option>
           </select>
         </div>
       </div>
@@ -99,7 +85,6 @@
         <button id="printBtn" class="px-4 py-2 bg-yellow-500 text-white rounded">列印</button>
         <button id="pdfBtn" class="px-4 py-2 bg-purple-600 text-white rounded">下載 PDF</button>
       </div>
-
     </div>
   </main>
 
@@ -108,7 +93,6 @@
   </footer>
 
   <script>
-    // --- 單人/雙人切換 ---
     const singleBtn = document.getElementById("singleBtn");
     const doubleBtn = document.getElementById("doubleBtn");
     const doubleInputs = document.getElementById("doubleInputs");
@@ -117,7 +101,6 @@
     singleBtn.onclick = () => { mode = "single"; doubleInputs.classList.add("hidden"); };
     doubleBtn.onclick = () => { mode = "double"; doubleInputs.classList.remove("hidden"); };
 
-    // --- 雷達圖初始化 ---
     const ctx = document.getElementById("radarChart");
     const radarChart = new Chart(ctx, {
       type: 'radar',
@@ -135,7 +118,6 @@
       options: { scales: { r: { beginAtZero: true, max: 10 } } }
     });
 
-    // --- 按下分析 ---
     document.querySelectorAll(".sceneBtn").forEach(btn => {
       btn.addEventListener("click", async () => {
         document.getElementById("progressBar").style.width = "0%";
@@ -167,17 +149,13 @@
         const data = await res.json();
 
         document.getElementById("result").innerHTML = data.text;
-
-        // 更新雷達圖
         radarChart.data.datasets[0].data = data.scores;
         radarChart.update();
       });
     });
 
-    // --- 列印 ---
     document.getElementById("printBtn").onclick = () => window.print();
 
-    // --- PDF ---
     document.getElementById("pdfBtn").onclick = async () => {
       const doc = new jsPDF("p", "pt", "a4");
       await html2canvas(document.body).then(canvas => {
