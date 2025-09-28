@@ -4,12 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>仙人指路神獸七十二型人格 - 分析報告</title>
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-    <script src="[https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js](https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js)"></script>
-    <script src="[https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js](https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js)"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
     <style>
-        /* (保留 V7 的所有樣式) */
         /* 確保 body 背景切換平滑 */
         body { 
             transition: background-color 0.5s ease, background-image 0.5s ease; 
@@ -71,21 +70,6 @@
             color: white;
             border-color: #6366f1;
         }
-        
-        /* ⭐️ V8 最終修正：隱藏任何包含 "JSON 輸出" 或 "JSON" 的元素 ⭐️ */
-        /* 由於我們不知道它被轉換成 H1/H2/H3 還是 P，我們嘗試用 CSS 屬性選擇器來隱藏它 */
-        #result h1:contains("JSON"),
-        #result h2:contains("JSON"),
-        #result h3:contains("JSON"),
-        #result p:contains("JSON 輸出") {
-            display: none !important;
-        }
-        
-        /* 註：Tailwind CSS 的 Purge 可能會移除 :contains 選擇器。
-           最安全的方法是直接在 JS 的 formatOutput 中移除，但先用通用 CSS 嘗試解決視覺問題。
-           為了兼容性，我們需要一個專門的 JS 腳本來移除它。
-        */
-        
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -225,7 +209,7 @@
         let currentScores = null; 
         let currentChartType = 'radar'; 
 
-        // --- 進度條控制函式 (確保存在) ---
+        // --- 進度條控制函式 ---
         let progressInterval = null;
         function startProgressBar() {
             if (progressInterval) clearInterval(progressInterval);
@@ -257,7 +241,7 @@
         }
         // --- 進度條控制函式結束 ---
 
-        // --- 模式切換邏輯 (確保存在) ---
+        // --- 模式切換邏輯 ---
         function setAnalysisMode(mode){
             analysisMode = mode;
             const singleBtn = $('#modeSingle');
@@ -279,7 +263,7 @@
             }
         }
 
-        // --- 情境輸入/預設邏輯 (確保存在) ---
+        // --- 情境輸入/預設邏輯 ---
         function toggleSexOptions(){
             if($('#context').value==='性愛'){ $('#sexOptions').classList.remove('hidden'); }
             else { $('#sexOptions').classList.add('hidden'); $('#sexDetailInput').value=''; }
@@ -294,7 +278,7 @@
             };
         }
         
-        // --- 格式化輸出函式 (V8 核心修正點) ---
+        // --- 格式化輸出函式 (V9 核心修正點：確保 JSON 輸出標籤被移除) ---
         function formatOutput(text){
             if(!text) return {html:'<p class="text-slate-500">無分析結果。</p>', scores:null, tags:[]};
             
@@ -306,27 +290,27 @@
                 try{ 
                     const j=JSON.parse(jsonBlock[1]); 
                     scores=j.scores||{}; 
-                    tags=j.tags||[]; 
+                    // V9 修正: 確保能處理複雜的 JSON tags 結構
+                    let rawTags = j.tags || [];
+                    if (!Array.isArray(rawTags)) {
+                        rawTags = Object.values(rawTags).flat().filter(t => typeof t === 'string' && t.trim() !== '');
+                    }
+                    tags = rawTags;
                 }catch(e){
                     console.error("JSON解析失敗", e);
                 }
-                // ⭐️ V8 修正：將 JSON 區塊從原始文本中移除 ⭐️
+                // 將 JSON 區塊從原始文本中移除
                 cleanText=text.replace(jsonBlock[0],'').trim();
             }
             
+            // ⭐️ V9 核心修正：先轉換為 HTML，再安全地移除殘留的 "JSON 輸出" 標籤
             let html = markdownConverter.makeHtml(cleanText);
 
-            // ⭐️ V8 修正：手動移除 Showdown 轉換後可能產生的 "JSON 輸出" 標籤 ⭐️
-            // 這是最穩定的解決方案，直接在 HTML 內容中刪除它。
-            html = html.replace(/<p>JSON 輸出<\/p>|<p>JSON output<\/p>|<h2>JSON 輸出<\/h2>|<h3>JSON 輸出<\/h3>/gi, '');
-            // 由於您圖片中的 "JSON 輸出" 是一個灰色區塊，它可能是 Showdown 錯誤地將 JSON 區塊前面/後面的一段文字當作 Code block 之外的內容。
-            // 嘗試移除常見的 Markdown 轉換殘留標籤：
-            html = html.replace(/<p>[\s]*JSON[\s]*輸出[\s]*<\/p>/gi, '').replace(/<hr[\s]*\/?>/gi, ''); 
+            // 移除 "JSON 輸出" 或類似的標籤（這通常是 Showdown 轉換時產生的冗餘標題/段落）
+            html = html.replace(/<p>[\s]*JSON[\s]*輸出[\s]*<\/p>/gi, '')
+                       .replace(/<h[1-6]>[\s]*JSON[\s]*輸出[\s]*<\/h[1-6]>/gi, '')
+                       .replace(/<hr[\s]*\/?>/gi, ''); 
             
-            // 如果 JSON 輸出是單獨一行且被 Markdown 轉換為 <hr> (水平線)，則也移除
-            html = html.replace(/<p>JSON 輸出<\/p>/gi, '');
-
-
             let scoresHTML = '';
             if(scores && Object.keys(scores).length > 0){
                 const clamp=v=>Math.max(0,Math.min(100,Number(v)||0));
@@ -343,10 +327,6 @@
                         ${row('創新 innov','innov','#6366f1')}
                     </div>`;
                     
-                if (tags && !Array.isArray(tags)) {
-                    tags = Object.values(tags).flat().filter(t => typeof t === 'string' && t.trim() !== '');
-                }
-
                 if(Array.isArray(tags) && tags.length > 0) scoresHTML+=`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`;
             }
             
@@ -461,12 +441,12 @@
                 };
             });
             
-            // 美化面板切換 (略)
+            // 美化面板切換
             $('#toggleBeauty').onclick = () => {
                 $('#beautyPanel').classList.toggle('hidden');
             };
 
-            // 背景設定 (略)
+            // 背景設定
             const body = $('body');
             const bgColorInput = $('#bgColor');
             const bgImageFile = $('#bgImageFile');
@@ -500,7 +480,7 @@
             };
             updateBackground(); // 初始設置背景
 
-            // 「一鍵分析」按鈕
+            // 「一鍵分析」按鈕 (請替換為您真實的 API 呼叫)
             $('#go').onclick = async () => {
                 const payload=getPayload();
                 let errorMessage = '';
@@ -520,19 +500,27 @@
 
                 const apiUrl=(payload.context==='性愛')?'/api/sex-template':'/api/analyze';
 
+                // 為了測試，這裡使用模擬響應，請替換為您實際的 fetch
+                const mockResponse = {
+                    "text": "## 性愛分析綜合報告\n\n雙方情感連結分數高，能在高度信任的基礎上進行深入交流。\n\n### 建議\n\n1.  **情境描述**: 建議採用「刺激的禁忌」主題。\n2.  **體位建議**: 可嘗試需較高難度默契的體位。\n\n```json\n{\n  \"scores\": {\n    \"fit\": 75,\n    \"comm\": 80,\n    \"pace\": 70,\n    \"account\": 65,\n    \"trust\": 80,\n    \"innov\": 85\n  },\n  \"tags\": [\n    \"情感連結 70\",\n    \"性慾強度 80\",\n    \"互動默契 75\"\n  ]\n}\n```\n",
+                };
+                
+                // 模擬 API 延遲
+                await new Promise(resolve => setTimeout(resolve, 1500)); 
+
                 try{
-                    // **請確保以下是您真實的 API 呼叫！**
-                    const r=await fetch(apiUrl,{
-                        method:'POST',
-                        headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify(payload)
-                    });
-                    
-                    if(!r.ok) { throw new Error(`API 錯誤: ${r.statusText} (${r.status})`); }
-                    
+                    // ⭐️ 替換：請將這裡的模擬邏輯替換為您的實際 `fetch` 呼叫 ⭐️
+                    // 例如：
+                    /*
+                    const r=await fetch(apiUrl,{...});
+                    if(!r.ok) { throw new Error(`API 錯誤: ${r.statusText}`); }
                     const data=await r.json();
+                    let rawText = data.text || data.choices?.[0]?.message?.content;
+                    */
                     
-                    let rawText = data.text || data.choices?.[0]?.message?.content || JSON.stringify(data,null,2);
+                    // 使用模擬數據
+                    let rawText = mockResponse.text;
+
 
                     const formatted=formatOutput(rawText);
                     
