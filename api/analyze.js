@@ -1,124 +1,60 @@
-// ===============================
-// 後端 API: analyze.js (最終版)
-// 放在 /api/analyze.js
-// ===============================
-
-import OpenAI from "openai";
-
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
+// 文件：/api/analyze.js
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const { type, mode, aKin, aBeast, aBranch, bKin, bBeast, bBranch } = req.body ?? {};
-
-    // 四大情境模板
-    const prompts = {
-      personality: `
-你是一位專業卜卦與人格分析師，請依以下輸入進行完整分析：
-六親：${aKin}
-六獸：${aBeast}
-地支：${aBranch}
-
-請輸出 JSON 格式：
-{
-  "analysis": "【個性特徵】...【詳細描述】...",
-  "radar": {
-    "智慧": 整數0-100,
-    "情感": 整數0-100,
-    "行動力": 整數0-100,
-    "合作": 整數0-100,
-    "領導": 整數0-100
-  },
-  "quote": "一句正向金句"
-}
-`,
-
-      career: `
-你是一位職場顧問，請根據上下屬六親六獸地支進行「職場互動分析」：
-上司：${aBeast}${aBranch} (${aKin})
-下屬：${bBeast}${bBranch} (${bKin})
-
-請輸出 JSON 格式：
-{
-  "analysis": "🐉 ${aBeast}${aBranch}上司 VS ${bBeast}${bBranch}下屬\n雙層角色設定...\n互動模式分析...\n高危衝突點...\n雙向應對策略...\n情境對話...\n經典避坑提醒...",
-  "radar": {
-    "智慧": 整數0-100,
-    "情感": 整數0-100,
-    "行動力": 整數0-100,
-    "合作": 整數0-100,
-    "領導": 整數0-100
-  },
-  "quote": "一句正向金句"
-}
-`,
-
-      love: `
-你是一位情感顧問，請根據雙方六親六獸地支進行「愛情互動分析」：
-一方：${aBeast}${aBranch} (${aKin})
-另一方：${bBeast}${bBranch} (${bKin})
-
-請輸出 JSON 格式：
-{
-  "analysis": "💖 ${aBeast}${aBranch} 與 ${bBeast}${bBranch}\n愛情特質...\n互動模式...\n挑戰...\n維繫建議...\n情感小劇場...",
-  "radar": {
-    "智慧": 整數0-100,
-    "情感": 整數0-100,
-    "行動力": 整數0-100,
-    "合作": 整數0-100,
-    "領導": 整數0-100
-  },
-  "quote": "一句正向金句"
-}
-`,
-
-      sex: `
-你是一位性愛心理學顧問，請根據雙方六親六獸地支進行「性愛互動分析」：
-一方：${aBeast}${aBranch} (${aKin})
-另一方：${bBeast}${bBranch} (${bKin})
-
-請輸出 JSON 格式：
-{
-  "analysis": "🔥 ${aBeast}${aBranch} X ${bBeast}${bBranch}\n情愛指數...\n互動模式...\n雷點分析...\n最佳性愛劇本推薦...\n推薦體位...\n推薦技巧...\n推薦服裝...\n推薦玩具...\n推薦場景...",
-  "radar": {
-    "智慧": 整數0-100,
-    "情感": 整數0-100,
-    "行動力": 整數0-100,
-    "合作": 整數0-100,
-    "領導": 整數0-100
-  },
-  "quote": "一句正向金句"
-}
-`
-    };
-
-    const prompt = prompts[type] || prompts["personality"];
-
-    // 呼叫 OpenAI，要求直接回傳 JSON
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "你是專業卜卦顧問，請務必輸出符合 JSON 格式的內容。" },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.7
-    });
-
-    let data;
-    try {
-      data = JSON.parse(completion.choices[0].message.content);
-    } catch (e) {
-      console.error("JSON 解析失敗", completion.choices[0].message.content);
-      return res.status(500).json({ error: "JSON 解析失敗", raw: completion.choices[0].message.content });
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ error: "missing_env", detail: "OPENAI_API_KEY not set" });
     }
 
-    res.status(200).json(data);
+    const { aBeast, aKin, aBranch, bBeast, bKin, bBranch, context, mode } = req.body ?? {};
 
-  } catch (err) {
-    console.error("分析失敗：", err);
-    res.status(500).json({ error: "分析失敗", detail: err.message });
+    const systemPrompt = `你是一位占卜與職場心理分析顧問。請根據六獸、六親、地支與情境，生成詳細的「人際 / 職場分析報告」。
+必須同時輸出文字說明與 JSON（分數與標籤），格式如下：
+文字區塊：分段描述人格互動、潛在問題、合作策略。
+JSON 區塊：用 \`\`\`json 標記，內含 "scores" 與 "tags"。
+scores 包含六個維度：fit, comm, pace, account, trust, innov，範圍 0~100。`;
+
+    const userPrompt = `分析對象：
+我方：${aBeast || "—"} × ${aKin || "—"} × ${aBranch || "—"}
+${mode === "dual" ? `對方：${bBeast || "—"} × ${bKin || "—"} × ${bBranch || "—"}` : ""}
+情境：${context || "—"}
+
+請輸出分析內容（文字 + JSON）。`;
+
+    const r = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        temperature: 0.7,
+        max_output_tokens: 900,
+        input: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+
+    const data = await r.json();
+
+    let text = data.output_text;
+    if (!text && Array.isArray(data.output)) {
+      text = data.output
+        .map(o => (Array.isArray(o.content) ? o.content.map(c => c.text || "").join("\n") : ""))
+        .join("\n")
+        .trim();
+    }
+    if (!text) text = JSON.stringify(data, null, 2);
+
+    res.status(200).json({ text });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "server_error", detail: e.message });
   }
 }
