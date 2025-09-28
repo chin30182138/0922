@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V7.1)</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V7.2)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
@@ -31,7 +31,7 @@
         .tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:15px; border-top:1px solid #e5e7eb; }
         .tag { background:#eef2ff; color:#3730a3; padding:4px 10px; border-radius:9999px; font-size:12px; font-weight: 500; }
         
-        /* AI 輸出樣式 */
+        /* AI 輸出樣式 (V7 豐富樣式) */
         #result h3 { font-size: 1.3rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 3px solid #6366f1; padding-bottom: 5px; color: #4338ca; }
         #result h4 { font-size: 1.15rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.4rem; }
         #result p { margin-bottom: 1rem; line-height: 1.6; }
@@ -39,14 +39,14 @@
         #result ul { list-style-type: disc; }
         #result ol { list-style-type: decimal; }
         
-        /* V7.1 修正：確保圖片能正確顯示且不破版 */
+        /* 移除 V7.1 的圖片樣式，回歸 V7 穩定版 */
         #result img {
-            max-width: 100%; /* 限制圖片最大寬度為容器寬度 */
+            max-width: 100%;
             height: auto;
-            margin: 15px 0; /* 增加圖片上下間距 */
-            display: block; /* 讓圖片獨佔一行 */
-            border-radius: 8px; /* 增加圓角 */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            margin: 0;
+            display: inline;
+            border-radius: 0;
+            box-shadow: none;
         }
         
         /* 列印時，隱藏控制項，並強制顯示顏色 */
@@ -90,7 +90,7 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V7.1)</h1>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V7.2)</h1>
             <p class="text-slate-500 text-sm">支援人際分析與性愛分析｜雷達圖 + 分數條 + PDF 匯出</p>
         </header>
 
@@ -288,7 +288,7 @@
             };
         }
         
-        // --- 格式化輸出函式 (V7.1 核心邏輯 - 保證文本完整，容忍 JSON 殘留) ---
+        // --- 格式化輸出函式 (V7.2 核心修正：確保內容完整，並精準移除 JSON 殘留) ---
         function formatOutput(text){
             if(!text) return {html:'<p class="text-slate-500">無分析結果。</p>', scores:null, tags:[]};
             
@@ -302,19 +302,21 @@
                     scores=j.scores||{}; 
                     tags=Array.isArray(j.tags) ? j.tags : Object.values(j.tags || {}).flat().filter(t => typeof t === 'string' && t.trim() !== '');
                     
-                    // V7.1 依然執行刪除 JSON 區塊，這是防止整個區塊被當作程式碼高亮顯示
+                    // V7.2 策略：只從原始文本中移除 JSON 區塊，保留其他所有文字
                     cleanText = text.replace(jsonBlock[0],'').trim(); 
                 }catch(e){
                     console.error("JSON解析失敗", e);
                 }
             }
             
-            // Markdown 轉換
+            // Markdown 轉換成 HTML
             let html = markdownConverter.makeHtml(cleanText);
 
-            // V7.1 額外處理：移除 JSON 輸出殘留的標題/段落，但不影響長篇文本
+            // V7.2 關鍵修正：精準移除「JSON 輸出」這個標籤，無論它被轉換成什麼 HTML 標籤
             html = html.replace(/<p>[\s]*JSON[\s]*輸出[\s]*<\/p>/gi, '')
-                       .replace(/<h[1-6]>[\s]*JSON[\s]*輸出[\s]*<\/h[1-6]>/gi, '');
+                       .replace(/<h[1-6]>[\s]*JSON[\s]*輸出[\s]*<\/h[1-6]>/gi, '')
+                       // 額外移除一個可能的空段落，如果 JSON 輸出標籤是單獨一行
+                       .replace(/<p>\s*<\/p>/gi, ''); 
 
             let scoresHTML = '';
             if(scores && Object.keys(scores).length > 0){
@@ -521,9 +523,9 @@
                     let rawText = data.text || data.choices?.[0]?.message?.content || JSON.stringify(data,null,2);
                     */
                     
-                    // 暫時使用模擬數據，展示 V7.1 圖片功能
+                    // 暫時使用模擬數據，模擬 V7 豐富且帶有 JSON 輸出殘留的文本
                     const mockResponse = {
-                        "text": "## 性愛分析綜合報告\n\n雙方情感連結分數高，能在高度信任的基礎上進行深入交流。\n\n### 建議\n\n1.  **情境描述**: 建議採用「刺激的禁忌」主題。\n2.  **體位建議**: 可嘗試需較高難度默契的體位。\n\n![高難度默契體位示意圖](https://placehold.co/400x250/E0F7FA/00796B?text=體位示意圖)\n\nJSON 輸出\n```json\n{\n  \"scores\": {\n    \"fit\": 75,\n    \"comm\": 80,\n    \"pace\": 70,\n    \"account\": 65,\n    \"trust\": 80,\n    \"innov\": 85\n  },\n  \"tags\": [\n    \"情感連結 70\",\n    \"性慾強度 80\",\n    \"互動默契 75\"\n  ]\n}\n```\n",
+                        "text": "## 跨部門協作分析報告\n\n### 雙方溝通模式與契合度\n\n**青龍-父母-子** 傾向於以長遠規劃和穩重的方式主導討論，重視結構和傳統價值觀。他們在處理涉及資源分配和風險控制的議題時，表現出強大的穩定性和責任感。然而，這可能使他們在面對變動或要求快速反應的情境時，顯得較為僵化。\n\n**朱雀-官鬼-午** 則充滿了活力和急切的行動力，追求立即的成果和高效的執行。他們擅長在壓力下推進工作，並能帶來快速的決策。但其缺點是可能因為過度關注短期目標，而忽略了細節的檢核，並可能與青龍方的穩重風格產生摩擦。\n\n**溝通建議**：青龍方應多釋出彈性，朱雀方應多提供結構化報告。雙方需建立共同的『效率指標』，而不是僅關注執行速度或完美主義。\n\n### 潛在風險與解決方案\n\n雙方在**信任 (trust)** 和**創新 (innov)** 面向分數偏低。朱雀方可能會質疑青龍方的決策速度，而青龍方可能認為朱雀方過於冒進。解決方案是：\n\n1.  **設立中立仲裁機制**：由第三方協調人來平衡雙方的節奏。\n2.  **小規模試驗**：針對新方案，先讓朱雀方在低風險小範圍進行快速試驗，緩解青龍方的疑慮。\n\nJSON 輸出\n```json\n{\n  \"scores\": {\n    \"fit\": 68,\n    \"comm\": 75,\n    \"pace\": 55,\n    \"account\": 80,\n    \"trust\": 60,\n    \"innov\": 58\n  },\n  \"tags\": [\n    \"穩定性強\",\n    \"行動力高\",\n    \"節奏不合\",\n    \"需第三方協調\"\n  ]\n}\n```\n",
                     };
                     
                     await new Promise(resolve => setTimeout(resolve, 1500)); // 模擬 API 延遲
