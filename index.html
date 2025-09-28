@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
     <style>
-        /* 確保 body 背景切換平滑，並設置背景圖片的樣式 */
+        /* 確保 body 背景切換平滑 */
         body { 
             transition: background-color 0.5s ease, background-image 0.5s ease; 
             background-size: cover; 
@@ -25,7 +25,7 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
-        /* 分數條與標籤樣式 (與前版一致) */
+        /* 分數條與標籤樣式 */
         .scores { display:grid; gap:8px; margin-top:20px; padding-top:15px; border-top:1px solid #e5e7eb; }
         .score { display:flex; align-items:center; gap:10px; font-size:14px }
         .bar { flex:1; height:12px; background:#e5e7eb; border-radius:9999px; overflow:hidden }
@@ -33,7 +33,7 @@
         .tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:15px; border-top:1px solid #e5e7eb; }
         .tag { background:#eef2ff; color:#3730a3; padding:4px 10px; border-radius:9999px; font-size:12px; font-weight: 500; }
         
-        /* 讓 AI 輸出的 Markdown 樣式更清晰 */
+        /* AI 輸出樣式 */
         #result h3 { font-size: 1.3rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 3px solid #6366f1; padding-bottom: 5px; color: #4338ca; }
         #result h4 { font-size: 1.15rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.4rem; }
         #result p { margin-bottom: 1rem; line-height: 1.6; }
@@ -41,61 +41,15 @@
         #result ul { list-style-type: disc; }
         #result ol { list-style-type: decimal; }
         
-        /* 🌟 列印優化 (專業排版與彩色列印) 🌟 */
+        /* 列印時，隱藏控制項，並強制顯示顏色 */
         @media print {
             .no-print { display: none !important; }
-            
-            /* 強制背景色和圖片保留 (彩色列印/PDF 的關鍵) */
             * {
                 -webkit-print-color-adjust: exact !important;
                 color-adjust: exact !important;
             }
-            body { 
-                background-color: #ffffff !important; 
-                background-image: none !important; 
-                padding-top: 20px; /* 增加頂部空間 */
-            }
-            
-            /* 專業報告樣式 */
-            .max-w-5xl { max-width: 100% !important; margin: 0 auto !important; }
-            .result-section { box-shadow: none !important; border: none !important; background-color: white !important; }
-            .grid { display: block !important; } /* 在列印時取消 grid 排列 */
-            
-            /* 報告標題 */
-            .print-header { display: block !important; text-align: center; margin-bottom: 20px; }
-            .print-header h1 { font-size: 24pt; font-weight: bold; }
-            
-            /* 雷達圖區塊：設置為全寬，然後在下方添加分析文本 */
-            #chartContainer {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                width: 100%;
-                max-width: 450px; /* 控制雷達圖最大寬度 */
-                margin: 0 auto 30px auto;
-                float: none;
-            }
-            
-            /* 分數與標籤區塊專業化 */
-            .scores-tags-print { 
-                width: 100%; 
-                margin: 20px 0; 
-                page-break-inside: avoid; /* 避免在區塊中間斷頁 */
-                border: 1px solid #ccc;
-                padding: 15px;
-                border-radius: 8px;
-            }
-            
-            #result {
-                clear: both; /* 確保文本在圖表和分數下方 */
-                padding-top: 20px;
-                border-top: 1px solid #ddd;
-            }
-
             @page { margin: 15mm; }
         }
-        
-        /* 隱藏用於列印的標題，只在列印時顯示 */
         .print-header { display: none; }
     </style>
 </head>
@@ -205,17 +159,13 @@
 
         <section class="result-section p-5 rounded-xl shadow space-y-4">
             <div class="grid md:grid-cols-3 gap-6">
-                <div id="chartContainer" class="md:col-span-1 flex justify-center items-start" style="min-height: 280px;">
+                <div id="chartContainer" class="md:col-span-1 flex justify-center items-center" style="min-height: 280px;">
                     </div>
                 
                 <div id="scoresTagsWeb" class="md:col-span-2">
                     <div id="webScoresAndTags">
                         <p class="text-slate-500">選擇六獸、六親、地支和情境後，點擊「一鍵分析」開始。</p>
                     </div>
-                </div>
-                
-                <div id="scoresTagsPrint" class="scores-tags-print" style="display: none;">
-                    <div id="printScoresAndTags"></div>
                 </div>
             </div>
             
@@ -230,12 +180,9 @@
         let analysisMode = 'single';
         const markdownConverter = new showdown.Converter(); 
 
-        // 全域變數，用於儲存分數和標籤，供列印使用
-        let currentScores = null;
-        let currentTags = [];
-        let radarChart = null;
+        let radarChart = null; // 全域變數，用於儲存 Chart 實例
+        let currentScores = null; // 儲存當前分數
 
-        // 設定報告生成時間 (用於列印)
         document.addEventListener('DOMContentLoaded', () => {
             $('#reportTime').textContent = new Date().toLocaleDateString('zh-TW', {
                 year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -243,13 +190,12 @@
             setAnalysisMode('dual');
         });
 
-        // --- 進度條控制函式 (無變動) ---
+        // --- 進度條控制函式 (略) ---
         let progressInterval = null;
         function startProgressBar() {
             if (progressInterval) clearInterval(progressInterval);
             $('#progressBar').classList.remove('hidden');
             $('#progress').style.width = '10%'; 
-            
             let progress = 10;
             progressInterval = setInterval(() => {
                 if (progress < 90) {
@@ -300,7 +246,7 @@
         $('#modeSingle').onclick=()=>setAnalysisMode('single');
         $('#modeDual').onclick=()=>setAnalysisMode('dual');
         
-        // 情境預設與細節輸入 (無變動)
+        // 情境預設與細節輸入 (略)
         $$('.preset').forEach(b=>b.onclick=()=>{ $('#context').value=b.textContent; toggleSexOptions(); });
         $('#context').oninput=toggleSexOptions;
         
@@ -329,7 +275,7 @@
             };
         }
 
-        // 格式化函式 (更新：分離網頁顯示和列印數據儲存)
+        // 格式化函式 (無變動)
         function formatOutput(text){
             if(!text) return {html:'<p class="text-slate-500">無分析結果。</p>', scores:null, tags:[]};
             
@@ -342,14 +288,11 @@
                 cleanText=text.replace(jsonBlock[0],'').trim();
             }
             
-            // Markdown 轉 HTML
             let html = markdownConverter.makeHtml(cleanText);
 
-            // 組合分數條
             let scoresHTML = '';
             if(scores){
                 const clamp=v=>Math.max(0,Math.min(100,Number(v)||0));
-                // 分數條 HTML 結構
                 const row=(l,k,c)=>`<div class="score"><b>${l}</b><div class="bar"><i style="width:${clamp(scores[k])}%;background:${c}"></i></div><em>${clamp(scores[k])}</em></div>`;
                 
                 scoresHTML=`
@@ -363,40 +306,41 @@
                         ${row('創新 innov','innov','#6366f1')}
                     </div>`;
                     
-                // 組合標籤
                 if(tags.length) scoresHTML+=`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`;
             }
             
-            // 儲存為列印/PDF 使用
-            currentScores = scores;
-            currentTags = tags;
-
             return {html: html, scores, tags, webScoresHTML: scoresHTML};
         }
 
 
-        // --- 🌟 雷達圖繪製與列印轉換修復 🌟 ---
+        // --- 🎯 雷達圖最終修復與強制顯示 🎯 ---
         function renderRadar(scores){
+            console.log("嘗試繪製雷達圖，傳入的數據：", scores); // 最終診斷輸出
+
             const wrap = $('#chartContainer');
             
+            // 1. 銷毀舊圖表實例
             if(radarChart) {
                 radarChart.destroy();
                 radarChart = null;
             }
-            wrap.innerHTML = ''; // 清除容器內容
+            wrap.innerHTML = ''; // 2. 清除容器內容
 
             if(!scores) return; 
-            
+            currentScores = scores; // 儲存分數
+
+            // 3. 準備數據
             const labels=['契合 fit','溝通 comm','節奏 pace','權責 account','信任 trust','創新 innov'];
             const data=[scores.fit,scores.comm,scores.pace,scores.account,scores.trust,scores.innov];
             
-            // 創建新的 Canvas 元素
+            // 4. 動態創建一個新的 Canvas 元素
             const canvas=document.createElement('canvas'); 
             canvas.id = 'radarCanvas'; 
             wrap.appendChild(canvas);
             
-            // 繪製新圖表
+            // 5. 繪製新圖表
             try {
+                // 強制繪圖，將 Chart 實例儲存到全域變數
                 radarChart=new Chart(canvas.getContext('2d'),{ 
                     type:'radar',
                     data:{labels,datasets:[{
@@ -430,86 +374,12 @@
                 });
             } catch (e) {
                 console.error("Chart.js 繪製失敗:", e);
-                wrap.innerHTML = '<p class="text-red-500 text-sm p-4">圖表繪製失敗。</p>';
+                wrap.innerHTML = '<p class="text-red-500 text-sm p-4">圖表繪製失敗。錯誤訊息已輸出到控制台。</p>';
             }
         }
+        // --- 雷達圖修復結束 ---
         
-        // 🌟 轉換 Canvas 為圖片以供列印 🌟
-        function setupPrintLayout() {
-            // 1. 處理雷達圖
-            const wrap = $('#chartContainer');
-            const printWrap = wrap.cloneNode(true);
-            const canvas = printWrap.querySelector('canvas');
-            
-            // 清除網頁顯示的 Canvas，準備插入圖片
-            wrap.innerHTML = '';
-            
-            if (radarChart && canvas) {
-                // 將 Canvas 轉換為 Base64 圖片
-                const imgUrl = radarChart.toBase64Image();
-                const img = document.createElement('img');
-                img.src = imgUrl;
-                img.style.maxWidth = '100%';
-                img.style.height = 'auto';
-                
-                // 替換掉 Canvas 元素
-                wrap.appendChild(img);
-                
-                // 銷毀 Chart 實例 (防止内存洩漏)
-                radarChart.destroy();
-                radarChart = null;
-            }
-            
-            // 2. 處理分數條和標籤 (從 web 切換到 print)
-            $('#scoresTagsWeb').style.display = 'none';
-            $('#scoresTagsPrint').style.display = 'block';
-
-            let printScoresHTML = '';
-            if (currentScores) {
-                const clamp=v=>Math.max(0,Math.min(100,Number(v)||0));
-                // 分數條 HTML 結構 (為列印優化)
-                const row=(l,k,c)=>`<div style="display:flex; align-items:center; gap:10px; font-size:12pt; margin-bottom: 5px;">
-                                        <b style="width: 100px;">${l}</b>
-                                        <div style="flex:1; height:10px; background:#e5e7eb; border-radius:9999px; overflow:hidden;">
-                                            <i style="display:block; height:100%; width:${clamp(currentScores[k])}%; background:${c}"></i>
-                                        </div>
-                                        <em style="font-style: normal; font-weight: bold; width: 30px; text-align: right;">${clamp(currentScores[k])}</em>
-                                    </div>`;
-                
-                printScoresHTML=`
-                    <h3 style="border-bottom: 2px solid #ccc; margin-top:0; padding-bottom: 5px; font-size: 14pt;">六維度分數</h3>
-                    <div style="margin-top:15px;">
-                        ${row('契合 fit','fit','#22c55e')}
-                        ${row('溝通 comm','comm','#06b6d4')}
-                        ${row('節奏 pace','pace','#f59e0b')}
-                        ${row('權責 account','account','#8b5cf6')}
-                        ${row('信任 trust','trust','#ef4444')}
-                        ${row('創新 innov','innov','#6366f1')}
-                    </div>`;
-                    
-                // 組合標籤
-                if(currentTags.length) printScoresHTML+=`<div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ddd;">
-                                            <h4 style="font-size: 12pt; font-weight: bold; margin-bottom: 8px;">關鍵標籤</h4>
-                                            ${currentTags.map(t=>`<span style="background:#eef2ff; color:#3730a3; padding:4px 10px; border-radius:9999px; font-size:10pt; font-weight: 500; display: inline-block; margin: 3px;">${t}</span>`).join('')}
-                                        </div>`;
-            }
-            
-            $('#printScoresAndTags').innerHTML = printScoresHTML;
-            $('#scoresTagsPrint').style.display = 'block';
-            $('#scoresTagsWeb').style.display = 'none';
-        }
-
-        // 恢復網頁佈局
-        function restoreWebLayout() {
-            // 恢復分數條和標籤
-            $('#scoresTagsPrint').style.display = 'none';
-            $('#scoresTagsWeb').style.display = 'block';
-            
-            // 恢復雷達圖 (重新繪製)
-            renderRadar(currentScores);
-        }
-        
-        // --- 🌟 美化面板邏輯 🌟 ---
+        // --- 美化面板邏輯 (本機圖片上傳) ---
         $('#toggleBeauty').onclick = () => {
             $('#beautyPanel').classList.toggle('hidden');
         };
@@ -526,7 +396,6 @@
 
         bgColorInput.oninput = updateBackground;
 
-        // 🌟 處理本機圖片上傳 🌟
         bgImageFile.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -541,7 +410,7 @@
         };
 
         clearBgBtn.onclick = () => {
-            bgImageFile.value = ''; // 清除檔案選擇
+            bgImageFile.value = '';
             bgColorInput.value = '#f1f5f9';
             body.style.backgroundImage = 'none';
             body.style.backgroundColor = '#f1f5f9';
@@ -567,7 +436,6 @@
             $('#result').innerHTML='<p class="text-slate-500">正在等待 AI 分析...</p>'; 
             renderRadar(null); // 清除舊圖表
             $('#webScoresAndTags').innerHTML = '';
-            $('#printScoresAndTags').innerHTML = ''; // 清除列印數據
             startProgressBar();
 
             const apiUrl=(payload.context==='性愛')?'/api/sex-template':'/api/analyze';
@@ -600,21 +468,22 @@
             }
         };
 
-        // 🌟 列印/PDF 處理 🌟
+        // 簡化列印邏輯：直接呼叫列印，讓 CSS 處理彩色和隱藏
         $('#print').onclick = () => {
             if (!currentScores) {
                 alert("請先完成分析再列印報告！");
                 return;
             }
+            // 臨時修改標題以方便列印
+            $('.print-header').style.display = 'block';
+            $('.print-header').style.textAlign = 'center';
             
-            // 1. 轉換 Canvas 為圖片並設置列印版面
-            setupPrintLayout();
-            
-            // 2. 觸發列印
             window.print();
             
-            // 3. 等待列印/PDF 儲存完成後，恢復網頁版面
-            setTimeout(restoreWebLayout, 500); // 使用 setTimeout 確保列印視窗有時間開啟
+            // 列印完成後恢復
+            setTimeout(() => {
+                $('.print-header').style.display = 'none';
+            }, 100); 
         };
         
     </script>
