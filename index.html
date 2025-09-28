@@ -209,7 +209,7 @@
         let currentScores = null; 
         let currentChartType = 'radar'; 
 
-        // --- 進度條控制函式 ---
+        // --- 進度條控制函式 (保持不變) ---
         let progressInterval = null;
         function startProgressBar() {
             if (progressInterval) clearInterval(progressInterval);
@@ -241,7 +241,7 @@
         }
         // --- 進度條控制函式結束 ---
 
-        // --- 模式切換邏輯 ---
+        // --- 模式切換邏輯 (保持不變) ---
         function setAnalysisMode(mode){
             analysisMode = mode;
             const singleBtn = $('#modeSingle');
@@ -263,7 +263,7 @@
             }
         }
 
-        // --- 情境輸入/預設邏輯 ---
+        // --- 情境輸入/預設邏輯 (保持不變) ---
         function toggleSexOptions(){
             if($('#context').value==='性愛'){ $('#sexOptions').classList.remove('hidden'); }
             else { $('#sexOptions').classList.add('hidden'); $('#sexDetailInput').value=''; }
@@ -278,7 +278,7 @@
             };
         }
         
-        // --- 格式化輸出函式 (V9 核心修正點：確保 JSON 輸出標籤被移除) ---
+        // --- 格式化輸出函式 (V10 核心修正：最保守的解析，確保內容不被誤刪) ---
         function formatOutput(text){
             if(!text) return {html:'<p class="text-slate-500">無分析結果。</p>', scores:null, tags:[]};
             
@@ -290,27 +290,33 @@
                 try{ 
                     const j=JSON.parse(jsonBlock[1]); 
                     scores=j.scores||{}; 
-                    // V9 修正: 確保能處理複雜的 JSON tags 結構
+                    // V10 修正: 確保能處理複雜的 JSON tags 結構
                     let rawTags = j.tags || [];
                     if (!Array.isArray(rawTags)) {
                         rawTags = Object.values(rawTags).flat().filter(t => typeof t === 'string' && t.trim() !== '');
                     }
                     tags = rawTags;
+                    
+                    // V10 關鍵修正：僅從文本中移除 JSON 程式碼區塊，保留其他所有文字
+                    cleanText=text.replace(jsonBlock[0],'').trim(); 
                 }catch(e){
                     console.error("JSON解析失敗", e);
                 }
-                // 將 JSON 區塊從原始文本中移除
-                cleanText=text.replace(jsonBlock[0],'').trim();
             }
             
-            // ⭐️ V9 核心修正：先轉換為 HTML，再安全地移除殘留的 "JSON 輸出" 標籤
+            // 1. Markdown 轉換成 HTML
             let html = markdownConverter.makeHtml(cleanText);
 
-            // 移除 "JSON 輸出" 或類似的標籤（這通常是 Showdown 轉換時產生的冗餘標題/段落）
+            // 2. ⭐️ 移除「JSON 輸出」的殘留標籤 (無論它們被轉換成了什麼標籤)
+            // 這是針對您截圖中看到的灰色標籤所做的最精準的字串替換。
+            // 它可以是 P 標籤，也可以是 H3 標籤。
             html = html.replace(/<p>[\s]*JSON[\s]*輸出[\s]*<\/p>/gi, '')
                        .replace(/<h[1-6]>[\s]*JSON[\s]*輸出[\s]*<\/h[1-6]>/gi, '')
-                       .replace(/<hr[\s]*\/?>/gi, ''); 
-            
+                       .replace(/<hr[\s]*\/?>/gi, '')
+                       // 處理 Showdown 將整個 ```json...``` 區塊當作程式碼區塊轉換後的結果
+                       .replace(/<pre><code class="json">[\s\S]*?<\/code><\/pre>/gi, ''); 
+
+            // 3. 處理分數條的 HTML 輸出
             let scoresHTML = '';
             if(scores && Object.keys(scores).length > 0){
                 const clamp=v=>Math.max(0,Math.min(100,Number(v)||0));
@@ -399,7 +405,7 @@
             }
         }
         
-        // --- 核心事件監聽和初始化 ---
+        // --- 核心事件監聽和初始化 (保持不變) ---
         document.addEventListener('DOMContentLoaded', () => {
             // 設定報告時間
             $('#reportTime').textContent = new Date().toLocaleDateString('zh-TW', {
@@ -500,25 +506,28 @@
 
                 const apiUrl=(payload.context==='性愛')?'/api/sex-template':'/api/analyze';
 
-                // 為了測試，這裡使用模擬響應，請替換為您實際的 fetch
-                const mockResponse = {
-                    "text": "## 性愛分析綜合報告\n\n雙方情感連結分數高，能在高度信任的基礎上進行深入交流。\n\n### 建議\n\n1.  **情境描述**: 建議採用「刺激的禁忌」主題。\n2.  **體位建議**: 可嘗試需較高難度默契的體位。\n\n```json\n{\n  \"scores\": {\n    \"fit\": 75,\n    \"comm\": 80,\n    \"pace\": 70,\n    \"account\": 65,\n    \"trust\": 80,\n    \"innov\": 85\n  },\n  \"tags\": [\n    \"情感連結 70\",\n    \"性慾強度 80\",\n    \"互動默契 75\"\n  ]\n}\n```\n",
-                };
-                
-                // 模擬 API 延遲
-                await new Promise(resolve => setTimeout(resolve, 1500)); 
-
+                // **請替換這裡的模擬邏輯為您的實際 fetch 呼叫**
                 try{
-                    // ⭐️ 替換：請將這裡的模擬邏輯替換為您的實際 `fetch` 呼叫 ⭐️
-                    // 例如：
+                    // 實際 API 呼叫範例 (請替換成您的)
                     /*
-                    const r=await fetch(apiUrl,{...});
-                    if(!r.ok) { throw new Error(`API 錯誤: ${r.statusText}`); }
+                    const r=await fetch(apiUrl,{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify(payload)
+                    });
+                    
+                    if(!r.ok) { throw new Error(`API 錯誤: ${r.statusText} (${r.status})`); }
+                    
                     const data=await r.json();
-                    let rawText = data.text || data.choices?.[0]?.message?.content;
+                    let rawText = data.text || data.choices?.[0]?.message?.content || JSON.stringify(data,null,2);
                     */
                     
-                    // 使用模擬數據
+                    // 暫時使用模擬數據，以確保前端邏輯正常
+                    const mockResponse = {
+                        "text": "## 性愛分析綜合報告\n\n雙方情感連結分數高，能在高度信任的基礎上進行深入交流。\n\n### 建議\n\n1.  **情境描述**: 建議採用「刺激的禁忌」主題。\n2.  **體位建議**: 可嘗試需較高難度默契的體位。\n\nJSON 輸出\n```json\n{\n  \"scores\": {\n    \"fit\": 75,\n    \"comm\": 80,\n    \"pace\": 70,\n    \"account\": 65,\n    \"trust\": 80,\n    \"innov\": 85\n  },\n  \"tags\": [\n    \"情感連結 70\",\n    \"性慾強度 80\",\n    \"互動默契 75\"\n  ]\n}\n```\n",
+                    };
+                    
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // 模擬 API 延遲
                     let rawText = mockResponse.text;
 
 
