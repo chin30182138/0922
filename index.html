@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V7.6)</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V7.7)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
@@ -95,8 +95,8 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V7.6)</h1>
-            <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜**美化功能修復**</p>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V7.7)</h1>
+            <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜**性愛細節全擴充**</p>
         </header>
 
         <div class="flex gap-4 flex-wrap no-print">
@@ -146,15 +146,25 @@
                 </div>
             <input id="context" class="w-full border rounded-lg p-2" placeholder="輸入自訂情境或分析主題…" />
             <div id="sexOptions" class="hidden mt-2 p-3 bg-red-50 border rounded-lg">
-                <label class="block mb-2 font-semibold text-red-700">性愛主題細節 (V7.6 邏輯修正)：</label>
+                <label class="block mb-2 font-semibold text-red-700">性愛主題細節 (V7.7 增補)：</label>
                 <div class="flex flex-wrap gap-2 mb-2">
-                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="禁忌場景">禁忌場景</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="地下賭場">地下賭場</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="露天泳池">露天泳池</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="摩天大樓">摩天大樓</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="試衣間">試衣間</button>
                     <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="權力遊戲">權力遊戲</button>
-                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="深度擁抱">深度擁抱</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="心理掌控">心理掌控</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="懸疑驚悚情境">懸疑驚悚情境</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="深度擁抱交合">深度擁抱交合</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="語音催眠">語音催眠</button>
                     <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="野性攻防">野性攻防</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="極端快感">極端快感</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="震動棒">震動棒</button>
                     <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="束縛配件">束縛配件</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="感官剝奪">感官剝奪</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="心理控制工具">心理控制工具</button>
                 </div>
-                <textarea id="sexDetailInput" class="w-full border rounded-lg p-2 text-sm" placeholder="輸入詳細偏好，例如：地下賭場、心理掌控、極端快感..."></textarea>
+                <textarea id="sexDetailInput" class="w-full border rounded-lg p-2 text-sm" placeholder="輸入詳細偏好，例如：地下賭場；心理掌控；極端快感..."></textarea>
             </div>
         </section>
 
@@ -478,20 +488,29 @@
             $('#modePersonality').onclick = () => setAnalysisMode('personality');
             $('#modeSingle').onclick = () => setAnalysisMode('single');
             $('#modeDual').onclick = () => setAnalysisMode('dual');
-            setAnalysisMode('personality'); // V7.6 預設為個性分析
+            setAnalysisMode('personality'); // V7.7 預設為個性分析
 
             // 情境輸入 oninput
             $('#context').oninput = toggleSexOptions;
             
-            // 性愛細節按鈕
+            // 性愛細節按鈕 (V7.7 邏輯優化：使用分號分隔)
             $$('.sex-detail').forEach(b => b.onclick = () => { 
                 const current = $('#sexDetailInput').value.trim();
                 const detail = b.dataset.detail;
-                if(current) {
-                    if(!current.endsWith('；') && !current.endsWith(',')) { $('#sexDetailInput').value += '；'; }
-                    if(!current.includes(detail)) { $('#sexDetailInput').value += detail; }
+                
+                // 檢查是否已存在，避免重複
+                const existingDetails = current.split('；').map(d => d.trim());
+                if(existingDetails.includes(detail)) {
+                    // 如果已存在，則移除它
+                    const newDetails = existingDetails.filter(d => d !== detail).join('；');
+                    $('#sexDetailInput').value = newDetails;
                 } else {
-                    $('#sexDetailInput').value = detail;
+                    // 如果不存在，則添加它
+                    if(current) {
+                        $('#sexDetailInput').value += '；' + detail;
+                    } else {
+                        $('#sexDetailInput').value = detail;
+                    }
                 }
             });
 
@@ -511,7 +530,7 @@
                 $('#beautyPanel').classList.toggle('hidden');
             };
 
-            // --- V7.6 核心修正：背景設定功能修復 ---
+            // --- V7.6/V7.7 核心修正：背景設定功能修復 ---
             const body = $('body');
             const bgColorInput = $('#bgColor');
             const bgImageFile = $('#bgImageFile');
@@ -519,9 +538,7 @@
             
             const updateBackground = () => {
                 const color = bgColorInput.value || '#f1f5f9';
-                // 修正：直接操作 style 屬性
                 body.style.backgroundColor = color;
-                // 確保 body 的 class 不會覆蓋背景色
                 body.classList.remove('bg-slate-50'); 
             };
 
@@ -532,7 +549,6 @@
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                        // 修正：設置背景圖片
                         body.style.backgroundImage = `url('${event.target.result}')`;
                         body.style.backgroundSize = 'cover';
                         body.style.backgroundPosition = 'center';
@@ -548,7 +564,6 @@
                 bgImageFile.value = '';
                 bgColorInput.value = '#f1f5f9';
                 body.style.backgroundImage = 'none';
-                // 修正：清除後恢復初始狀態
                 body.style.backgroundColor = '#f1f5f9';
                 body.classList.add('bg-slate-50'); 
             };
@@ -606,10 +621,10 @@
 ### 雙方情感連結與角色定位
 **${combinedA}** (我方) 傾向於扮演**主導者**，注重儀式感和過程中的細節掌控。**${combinedB}** (對方) 則表現出極高的**情感回應度**，渴望被強勢的慾望所引導。雙方的信任 (Trust) 分數極高，適合深度探索。
 
-### 🎭 ${theme} 執行指南 (V7.6 客製化內容)
+### 🎭 ${theme} 執行指南 (V7.7 客製化內容)
 
 #### 1. 情境設置與角色扮演
-* **場景建議**: 依據您的偏好「${payload.sexDetail || '禁忌場景'}」，建議選擇**摩天大樓**的頂樓套房，營造一種俯視世界和禁忌的刺激感。
+* **場景建議**: 依據您的偏好「${payload.sexDetail || '禁忌場景；權力遊戲'}」，建議選擇**摩天大樓**的頂樓套房，營造一種俯視世界和禁忌的刺激感。
 * **角色建議**: 推薦使用「**心理掌控**」的權力遊戲劇本。我方扮演冷靜自持的審判者，對方則扮演渴望救贖的囚徒，透過言語和肢體來進行權力的極致流動。
 
 #### 2. 技巧與體位推薦
