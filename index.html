@@ -6,14 +6,23 @@
     <title>仙人指路神獸七十二型人格</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
+
     <style>
         body { transition: background 0.3s ease; }
-        .scores { display:grid; gap:8px; margin-top:10px }
+        .scores { display:grid; gap:8px; margin-top:20px; padding-top:15px; border-top:1px solid #e5e7eb; }
         .score { display:flex; align-items:center; gap:10px; font-size:14px }
         .bar { flex:1; height:12px; background:#e5e7eb; border-radius:9999px; overflow:hidden }
-        .bar > i { display:block; height:100% }
-        .tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px }
-        .tag { background:#eef2ff; color:#3730a3; padding:4px 10px; border-radius:9999px; font-size:12px }
+        .bar > i { display:block; height:100%; transition: width 0.8s ease-out; }
+        .tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:15px; border-top:1px solid #e5e7eb; }
+        .tag { background:#eef2ff; color:#3730a3; padding:4px 10px; border-radius:9999px; font-size:12px; font-weight: 500; }
+        
+        /* 讓 AI 輸出的 Markdown 標題、列表等樣式更清晰 */
+        #result h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; }
+        #result h4 { font-size: 1.15rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.4rem; }
+        #result p { margin-bottom: 1rem; line-height: 1.6; }
+        #result ul { list-style-type: disc; padding-left: 25px; margin-bottom: 1rem; }
         
         /* 列印優化 */
         @media print {
@@ -85,7 +94,7 @@
                 <div class="flex flex-wrap gap-2 mb-2">
                     <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="情境描述">情境描述</button>
                     <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="姿勢建議">姿勢建議</button>
-                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="對話引導">對話引調</button>
+                    <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="對話引導">對話引導</button>
                 </div>
                 <textarea id="sexDetailInput" class="w-full border rounded-lg p-2 text-sm" placeholder="例如：海邊夜晚、挑逗體位、誘惑對話…"></textarea>
             </div>
@@ -104,15 +113,23 @@
         </div>
 
         <section class="bg-white p-5 rounded-xl shadow space-y-4">
-            <div id="result" class="prose text-[15px] max-w-none"></div>
-            <div id="chart"></div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div id="chartContainer" class="md:col-span-1 flex justify-center items-start">
+                    </div>
+                <div class="md:col-span-2">
+                    <div id="result" class="text-[15px] max-w-none">
+                        <p class="text-slate-500">選擇六獸、六親、地支和情境後，點擊「一鍵分析」開始。</p>
+                    </div>
+                </div>
+            </div>
         </section>
     </div>
 
     <script>
         const $ = s => document.querySelector(s);
         const $$ = s => document.querySelectorAll(s);
-        let analysisMode = 'single'; // 預設單人
+        let analysisMode = 'single';
+        const markdownConverter = new showdown.Converter(); // 🌟 初始化 Markdown 轉換器 🌟
 
         // --- 進度條控制函式 ---
         let progressInterval = null;
@@ -154,7 +171,6 @@
 
         function setAnalysisMode(mode){
             analysisMode = mode;
-            // 按鈕樣式切換
             const singleBtn = $('#modeSingle');
             const dualBtn = $('#modeDual');
             const sectionB = $('#sectionB');
@@ -178,7 +194,7 @@
 
         $$('.preset').forEach(b=>b.onclick=()=>{ $('#context').value=b.textContent; toggleSexOptions(); });
         $('#context').oninput=toggleSexOptions;
-        // 修正性愛細節邏輯，避免重複加入分隔符號
+        
         $$('.sex-detail').forEach(b=>b.onclick=()=>{ 
             const current = $('#sexDetailInput').value.trim();
             const detail = b.dataset.detail;
@@ -204,9 +220,9 @@
             };
         }
 
-        // 簡化 HTML 轉換，讓後端回傳的 Markdown / 純文字更好排版
+        // 🌟 修正後的格式化函式：使用 Markdown 轉換器 🌟
         function formatOutput(text){
-            if(!text) return {html:'<p>無分析結果</p>', scores:null, tags:[]};
+            if(!text) return {html:'<p class="text-slate-500">無分析結果。</p>', scores:null, tags:[]};
             
             const jsonBlock = text.match(/```json([\\s\\S]*?)```/i);
             let scores=null,tags=[];
@@ -217,16 +233,18 @@
                 cleanText=text.replace(jsonBlock[0],'').trim();
             }
             
-            // 基礎文本轉 HTML 排版
-            let html = cleanText
-                .split('\n\n').map(p => `<p>${p.trim()}</p>`).join('') // 轉換段落
-                .replace(/<p>\s*<br>\s*<\/p>/g, ''); // 移除空段落
+            // ⭐️ 核心修正：將 Markdown 文本轉換為 HTML ⭐️
+            let html = markdownConverter.makeHtml(cleanText);
 
+            // 組合分數條
+            let scoresHTML = '';
             if(scores){
                 const clamp=v=>Math.max(0,Math.min(100,Number(v)||0));
+                // 使用更豐富的顏色
                 const row=(l,k,c)=>`<div class="score"><b>${l}</b><div class="bar"><i style="width:${clamp(scores[k])}%;background:${c}"></i></div><em>${clamp(scores[k])}</em></div>`;
                 
-                const scoresHTML=`
+                scoresHTML=`
+                    <h3 style="border-bottom:none; margin-top:0;">六維度分數</h3>
                     <div class="scores">
                         ${row('契合 fit','fit','#22c55e')}
                         ${row('溝通 comm','comm','#06b6d4')}
@@ -236,33 +254,68 @@
                         ${row('創新 innov','innov','#6366f1')}
                     </div>`;
                     
-                html = `<h3 class="text-xl font-bold mt-4 mb-3">分析結果</h3>` + html + scoresHTML;
-
-                if(tags.length) html+=`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`;
+                // 組合標籤
+                if(tags.length) scoresHTML+=`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`;
             }
-
-            return {html,scores,tags};
+            
+            return {html: html + scoresHTML, scores, tags};
         }
 
         let radarChart=null;
         function renderRadar(scores){
-            if(!scores) { $('#chart').innerHTML = ''; return; }
-            const wrap=$('#chart'); wrap.innerHTML='';
+            const wrap = $('#chartContainer');
+            wrap.innerHTML = ''; // 清除舊圖表
+
+            if(!scores) return; 
+            
             const labels=['契合 fit','溝通 comm','節奏 pace','權責 account','信任 trust','創新 innov'];
             const data=[scores.fit,scores.comm,scores.pace,scores.account,scores.trust,scores.innov];
+            
+            // 🌟 雷達圖修正：確保每次都建立一個新的 Canvas 元素 🌟
             const canvas=document.createElement('canvas'); 
-            canvas.style.maxWidth = '400px'; // 限制最大寬度以維持雷達圖美觀
+            canvas.id = 'radarCanvas'; // 給定 ID
             wrap.appendChild(canvas);
+            
+            // 確保銷毀舊圖表實例
             if(radarChart) radarChart.destroy();
-            radarChart=new Chart(canvas,{type:'radar',
-                data:{labels,datasets:[{label:'六維度雷達圖',data,fill:true,backgroundColor:'rgba(99,102,241,0.15)',borderColor:'rgba(99,102,241,1)'}]},
-                options:{responsive:true, scales:{r:{suggestedMin:0,suggestedMax:100,ticks:{stepSize:20}}}}});
+            
+            // 繪製新圖表
+            radarChart=new Chart(canvas.getContext('2d'),{ // 傳遞 context
+                type:'radar',
+                data:{labels,datasets:[{
+                    label:'六維度分析',
+                    data,
+                    fill:true,
+                    backgroundColor:'rgba(99,102,241,0.2)', // 填色
+                    borderColor:'rgba(99,102,241,1)', // 邊框色
+                    pointBackgroundColor:'rgba(99,102,241,1)',
+                    pointBorderColor:'#fff',
+                    pointHoverBackgroundColor:'#fff',
+                    pointHoverBorderColor:'rgba(99,102,241,1)'
+                }]},
+                options:{
+                    responsive:true, 
+                    maintainAspectRatio: true, // 保持比例
+                    scales:{
+                        r:{
+                            angleLines:{ display:true },
+                            grid:{ color:'rgba(0, 0, 0, 0.1)' },
+                            pointLabels:{ font:{ size: 12 } },
+                            suggestedMin:0,
+                            suggestedMax:100,
+                            ticks:{ stepSize:20 } // 座標軸刻度
+                        }
+                    },
+                    plugins:{
+                        legend:{ display:false } // 隱藏圖例
+                    }
+                }
+            });
         }
 
         $('#go').onclick=async()=>{
             const payload=getPayload();
             
-            // 驗證輸入
             let errorMessage = '';
             const aComplete = payload.aBeast && payload.aKin && payload.aBranch;
             const bComplete = payload.bBeast && payload.bKin && payload.bBranch;
@@ -273,11 +326,10 @@
 
             if (errorMessage) { alert(errorMessage); return; }
 
-            // 清理介面並啟動進度條
-            $('#result').innerHTML=''; $('#chart').innerHTML='';
+            $('#result').innerHTML='<p class="text-slate-500">正在等待 AI 分析...</p>'; 
+            renderRadar(null); // 清除舊圖表
             startProgressBar();
 
-            // 判斷 API 路由
             const apiUrl=(payload.context==='性愛')?'/api/sex-template':'/api/analyze';
 
             try{
@@ -290,24 +342,25 @@
                 if(!r.ok) { throw new Error(`API 錯誤: ${r.statusText} (${r.status})`); }
                 
                 const data=await r.json();
-                const formatted=formatOutput(data.text);
+                
+                // 處理 AI 返回的文本，可能需要從 choices[0].message.content 提取
+                let rawText = data.text || data.choices?.[0]?.message?.content || JSON.stringify(data,null,2);
+
+                const formatted=formatOutput(rawText);
                 
                 $('#result').innerHTML=formatted.html;
                 renderRadar(formatted.scores);
                 
-                stopProgressBar(true); // 成功停止
+                stopProgressBar(true);
             }catch(e){ 
-                $('#result').innerHTML=`<p class="text-red-600">❌ 分析失敗：${String(e.message || e)}。請檢查後端服務是否運行及 API Key 是否正確。</p>`; 
+                $('#result').innerHTML=`<p class="text-red-600">❌ **分析失敗**：${String(e.message || e)}。請檢查後端服務是否運行及 API Key 是否正確。</p>`; 
                 renderRadar(null);
-                stopProgressBar(false); // 失敗停止
+                stopProgressBar(false);
             }
         };
 
-        // 列印功能現在隱藏了不必要的區塊 (no-print)
         $('#print').onclick=()=>window.print(); 
-        
-        // 初始化模式
-        setAnalysisMode('single');
+        setAnalysisMode('dual'); // 預設雙人，方便測試
     </script>
 </body>
 </html>
