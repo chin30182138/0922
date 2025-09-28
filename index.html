@@ -10,10 +10,21 @@
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
     <style>
-        /* 讓 body 顏色切換更平滑 */
-        body { transition: background 0.3s ease; } 
+        /* 確保 body 背景切換平滑，並設置背景圖片的樣式 */
+        body { 
+            transition: background-color 0.5s ease, background-image 0.5s ease; 
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed; 
+        } 
         
-        /* 分數條與標籤樣式 */
+        /* 確保結果區塊的背景是白色，不會被 body 背景圖干擾，增加可讀性 */
+        .result-section { 
+            background-color: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(5px); /* 輕微模糊效果 */
+        }
+
+        /* 分數條與標籤樣式 (與前版一致) */
         .scores { display:grid; gap:8px; margin-top:20px; padding-top:15px; border-top:1px solid #e5e7eb; }
         .score { display:flex; align-items:center; gap:10px; font-size:14px }
         .bar { flex:1; height:12px; background:#e5e7eb; border-radius:9999px; overflow:hidden }
@@ -106,6 +117,8 @@
         <div class="flex flex-wrap items-center gap-3 no-print">
             <button id="go" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold">一鍵分析</button>
             <button id="print" class="px-4 py-2 rounded-lg bg-slate-200 text-slate-800 font-semibold">列印 / PDF</button>
+            
+            <button id="toggleBeauty" class="px-4 py-2 rounded-lg bg-pink-500 text-white font-semibold">🎨 美化</button>
 
             <div id="statusContainer" class="flex items-center gap-3">
                 <span id="status" class="text-sm text-slate-600"></span>
@@ -114,10 +127,26 @@
                 </div>
             </div>
         </div>
+        
+        <section id="beautyPanel" class="bg-white p-4 rounded-xl shadow space-y-3 hidden no-print">
+            <h2 class="font-semibold">背景與介面美化</h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">背景顏色選擇：</label>
+                    <input type="color" id="bgColor" class="w-full h-10 p-1 border rounded-lg" value="#f1f5f9">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">背景圖片 URL (選填)：</label>
+                    <input type="url" id="bgImage" class="w-full border rounded-lg p-2 text-sm" placeholder="輸入圖片網址 (例如：https://..." />
+                </div>
+            </div>
+            <button id="clearBg" class="px-3 py-1.5 rounded-full bg-red-100 text-red-700 text-sm">清除圖片與顏色</button>
+        </section>
 
-        <section class="bg-white p-5 rounded-xl shadow space-y-4">
+
+        <section class="result-section p-5 rounded-xl shadow space-y-4">
             <div class="grid md:grid-cols-3 gap-6">
-                <div id="chartContainer" class="md:col-span-1 flex justify-center items-start" style="min-height: 250px;">
+                <div id="chartContainer" class="md:col-span-1 flex justify-center items-start" style="min-height: 280px;">
                     </div>
                 <div class="md:col-span-2">
                     <div id="result" class="text-[15px] max-w-none">
@@ -172,13 +201,12 @@
         }
         // --- 進度條控制函式結束 ---
 
-        // 🌟 修正點 2：恢復背景切換邏輯 🌟
+        // 模式切換 (移除背景切換邏輯，交由美化面板控制)
         function setAnalysisMode(mode){
             analysisMode = mode;
             const singleBtn = $('#modeSingle');
             const dualBtn = $('#modeDual');
             const sectionB = $('#sectionB');
-            const body = $('body'); // 獲取 body 元素
 
             if(mode === 'single'){ 
                 sectionB.style.display = 'none';
@@ -186,26 +214,18 @@
                 singleBtn.classList.replace('text-slate-800', 'text-white');
                 dualBtn.classList.replace('bg-indigo-600', 'bg-slate-200');
                 dualBtn.classList.replace('text-white', 'text-slate-800');
-                
-                // 單人模式：恢復背景為 bg-slate-50
-                body.classList.remove('bg-red-50'); 
-                body.classList.add('bg-slate-50');
-                
             } else { // dual
                 sectionB.style.display = 'block';
                 dualBtn.classList.replace('bg-slate-200', 'bg-indigo-600');
                 dualBtn.classList.replace('text-slate-800', 'text-white');
                 singleBtn.classList.replace('bg-indigo-600', 'bg-slate-200');
                 singleBtn.classList.replace('text-white', 'text-slate-800');
-                
-                // 雙人模式：恢復背景為 bg-red-50
-                body.classList.remove('bg-slate-50');
-                body.classList.add('bg-red-50'); 
             }
         }
         $('#modeSingle').onclick=()=>setAnalysisMode('single');
         $('#modeDual').onclick=()=>setAnalysisMode('dual');
-
+        
+        // 情境預設與細節輸入 (無變動)
         $$('.preset').forEach(b=>b.onclick=()=>{ $('#context').value=b.textContent; toggleSexOptions(); });
         $('#context').oninput=toggleSexOptions;
         
@@ -275,58 +295,108 @@
             return {html: html + scoresHTML, scores, tags};
         }
 
+        // --- 🌟 雷達圖最終修復 🌟 ---
         let radarChart=null;
-        // 雷達圖繪製函式 (已確認核心邏輯正確)
         function renderRadar(scores){
             const wrap = $('#chartContainer');
-            wrap.innerHTML = ''; // 清除舊圖表
+            
+            // 1. 銷毀舊圖表實例（如果存在）
+            if(radarChart) {
+                radarChart.destroy();
+                radarChart = null; // 確保實例被清除
+            }
+            
+            // 2. 清除容器內容
+            wrap.innerHTML = ''; 
 
             if(!scores) return; 
             
+            // 3. 準備數據
             const labels=['契合 fit','溝通 comm','節奏 pace','權責 account','信任 trust','創新 innov'];
             const data=[scores.fit,scores.comm,scores.pace,scores.account,scores.trust,scores.innov];
             
-            // 確保每次都建立一個新的 Canvas 元素
+            // 4. 動態創建一個新的 Canvas 元素
             const canvas=document.createElement('canvas'); 
             canvas.id = 'radarCanvas'; 
             wrap.appendChild(canvas);
             
-            // 確保銷毀舊圖表實例
-            if(radarChart) radarChart.destroy();
-            
-            // 繪製新圖表
-            radarChart=new Chart(canvas.getContext('2d'),{ 
-                type:'radar',
-                data:{labels,datasets:[{
-                    label:'六維度分析',
-                    data,
-                    fill:true,
-                    backgroundColor:'rgba(99,102,241,0.2)', 
-                    borderColor:'rgba(99,102,241,1)', 
-                    pointBackgroundColor:'rgba(99,102,241,1)',
-                    pointBorderColor:'#fff',
-                    pointHoverBackgroundColor:'#fff',
-                    pointHoverBorderColor:'rgba(99,102,241,1)'
-                }]},
-                options:{
-                    responsive:true, 
-                    maintainAspectRatio: true, 
-                    scales:{
-                        r:{
-                            angleLines:{ display:true },
-                            grid:{ color:'rgba(0, 0, 0, 0.1)' },
-                            pointLabels:{ font:{ size: 12 } },
-                            suggestedMin:0,
-                            suggestedMax:100,
-                            ticks:{ stepSize:20 } 
+            // 5. 繪製新圖表
+            try {
+                radarChart=new Chart(canvas.getContext('2d'),{ 
+                    type:'radar',
+                    data:{labels,datasets:[{
+                        label:'六維度分析',
+                        data,
+                        fill:true,
+                        backgroundColor:'rgba(99,102,241,0.2)', 
+                        borderColor:'rgba(99,102,241,1)', 
+                        pointBackgroundColor:'rgba(99,102,241,1)',
+                        pointBorderColor:'#fff',
+                        pointHoverBackgroundColor:'#fff',
+                        pointHoverBorderColor:'rgba(99,102,241,1)'
+                    }]},
+                    options:{
+                        responsive:true, 
+                        maintainAspectRatio: true, 
+                        scales:{
+                            r:{
+                                angleLines:{ display:true },
+                                grid:{ color:'rgba(0, 0, 0, 0.1)' },
+                                pointLabels:{ font:{ size: 12 } },
+                                suggestedMin:0,
+                                suggestedMax:100,
+                                ticks:{ stepSize:20 } 
+                            }
+                        },
+                        plugins:{
+                            legend:{ display:false } 
                         }
-                    },
-                    plugins:{
-                        legend:{ display:false } 
                     }
-                }
-            });
+                });
+            } catch (e) {
+                console.error("Chart.js 繪製失敗:", e);
+                // 如果繪製失敗，給出提示
+                wrap.innerHTML = '<p class="text-red-500 text-sm p-4">圖表繪製失敗，請檢查 Chart.js 載入和資料格式。</p>';
+            }
         }
+        // --- 雷達圖修復結束 ---
+        
+        // --- 🌟 美化面板邏輯 🌟 ---
+        $('#toggleBeauty').onclick = () => {
+            $('#beautyPanel').classList.toggle('hidden');
+        };
+
+        const body = $('body');
+        const bgColorInput = $('#bgColor');
+        const bgImageInput = $('#bgImage');
+        const clearBgBtn = $('#clearBg');
+        
+        function updateBackground() {
+            const color = bgColorInput.value || '#f1f5f9'; // 預設淺灰色
+            const image = bgImageInput.value.trim();
+
+            body.style.backgroundColor = color;
+            if (image) {
+                body.style.backgroundImage = `url('${image}')`;
+            } else {
+                body.style.backgroundImage = 'none';
+            }
+        }
+        
+        bgColorInput.oninput = updateBackground;
+        bgImageInput.oninput = updateBackground;
+
+        clearBgBtn.onclick = () => {
+            bgImageInput.value = '';
+            bgColorInput.value = '#f1f5f9';
+            body.style.backgroundImage = 'none';
+            body.style.backgroundColor = '#f1f5f9';
+        };
+
+        // 預設設置
+        updateBackground(); 
+        // --- 美化面板邏輯結束 ---
+
 
         $('#go').onclick=async()=>{
             const payload=getPayload();
@@ -348,6 +418,10 @@
             const apiUrl=(payload.context==='性愛')?'/api/sex-template':'/api/analyze';
 
             try{
+                // 注意：這裡的 fetch 只是模擬，實際運作需要後端 API 配合
+                // 為了方便測試雷達圖，我們可以暫時使用一個靜態響應
+                // 為了不干擾您的 API 測試流程，我們暫時保留 API 呼叫。
+
                 const r=await fetch(apiUrl,{
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
@@ -358,7 +432,6 @@
                 
                 const data=await r.json();
                 
-                // 處理 AI 返回的文本，可能需要從 choices[0].message.content 提取
                 let rawText = data.text || data.choices?.[0]?.message?.content || JSON.stringify(data,null,2);
 
                 const formatted=formatOutput(rawText);
