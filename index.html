@@ -4,11 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>仙人指路神獸七十二型人格 - 分析報告</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js](https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js)"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js](https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js)"></script>
 
     <style>
+        /* (保留 V7 的所有樣式) */
         /* 確保 body 背景切換平滑 */
         body { 
             transition: background-color 0.5s ease, background-image 0.5s ease; 
@@ -70,6 +71,21 @@
             color: white;
             border-color: #6366f1;
         }
+        
+        /* ⭐️ V8 最終修正：隱藏任何包含 "JSON 輸出" 或 "JSON" 的元素 ⭐️ */
+        /* 由於我們不知道它被轉換成 H1/H2/H3 還是 P，我們嘗試用 CSS 屬性選擇器來隱藏它 */
+        #result h1:contains("JSON"),
+        #result h2:contains("JSON"),
+        #result h3:contains("JSON"),
+        #result p:contains("JSON 輸出") {
+            display: none !important;
+        }
+        
+        /* 註：Tailwind CSS 的 Purge 可能會移除 :contains 選擇器。
+           最安全的方法是直接在 JS 的 formatOutput 中移除，但先用通用 CSS 嘗試解決視覺問題。
+           為了兼容性，我們需要一個專門的 JS 腳本來移除它。
+        */
+        
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -278,7 +294,7 @@
             };
         }
         
-        // --- 格式化輸出函式 (確保存在) ---
+        // --- 格式化輸出函式 (V8 核心修正點) ---
         function formatOutput(text){
             if(!text) return {html:'<p class="text-slate-500">無分析結果。</p>', scores:null, tags:[]};
             
@@ -294,10 +310,22 @@
                 }catch(e){
                     console.error("JSON解析失敗", e);
                 }
+                // ⭐️ V8 修正：將 JSON 區塊從原始文本中移除 ⭐️
                 cleanText=text.replace(jsonBlock[0],'').trim();
             }
             
             let html = markdownConverter.makeHtml(cleanText);
+
+            // ⭐️ V8 修正：手動移除 Showdown 轉換後可能產生的 "JSON 輸出" 標籤 ⭐️
+            // 這是最穩定的解決方案，直接在 HTML 內容中刪除它。
+            html = html.replace(/<p>JSON 輸出<\/p>|<p>JSON output<\/p>|<h2>JSON 輸出<\/h2>|<h3>JSON 輸出<\/h3>/gi, '');
+            // 由於您圖片中的 "JSON 輸出" 是一個灰色區塊，它可能是 Showdown 錯誤地將 JSON 區塊前面/後面的一段文字當作 Code block 之外的內容。
+            // 嘗試移除常見的 Markdown 轉換殘留標籤：
+            html = html.replace(/<p>[\s]*JSON[\s]*輸出[\s]*<\/p>/gi, '').replace(/<hr[\s]*\/?>/gi, ''); 
+            
+            // 如果 JSON 輸出是單獨一行且被 Markdown 轉換為 <hr> (水平線)，則也移除
+            html = html.replace(/<p>JSON 輸出<\/p>/gi, '');
+
 
             let scoresHTML = '';
             if(scores && Object.keys(scores).length > 0){
@@ -325,7 +353,7 @@
             return {html: html, scores, tags, webScoresHTML: scoresHTML};
         }
 
-        // --- 圖表繪製核心函式 (確保存在) ---
+        // --- 圖表繪製核心函式 (保持不變) ---
         function renderChart(scores, type){
             const wrap = $('#chartContainer');
             
@@ -433,12 +461,12 @@
                 };
             });
             
-            // 美化面板切換
+            // 美化面板切換 (略)
             $('#toggleBeauty').onclick = () => {
                 $('#beautyPanel').classList.toggle('hidden');
             };
 
-            // 背景設定
+            // 背景設定 (略)
             const body = $('body');
             const bgColorInput = $('#bgColor');
             const bgImageFile = $('#bgImageFile');
