@@ -205,20 +205,43 @@
         let analysisMode = 'single';
         const markdownConverter = new showdown.Converter(); 
 
-        let radarChart = null; // Chart 實例
-        let currentScores = null; // 儲存當前分數
-        let currentChartType = 'radar'; // 預設圖表類型
+        let radarChart = null; 
+        let currentScores = null; 
+        let currentChartType = 'radar'; 
 
-        document.addEventListener('DOMContentLoaded', () => {
-            $('#reportTime').textContent = new Date().toLocaleDateString('zh-TW', {
-                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-            });
-            setAnalysisMode('dual');
-        });
+        // --- 進度條控制函式 (確保存在) ---
+        let progressInterval = null;
+        function startProgressBar() {
+            if (progressInterval) clearInterval(progressInterval);
+            $('#progressBar').classList.remove('hidden');
+            $('#progress').style.width = '10%'; 
+            let progress = 10;
+            progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.floor(Math.random() * 5);
+                    progress = Math.min(progress, 90);
+                    $('#progress').style.width = progress + '%';
+                    $('#status').textContent = `分析中... (${progress}%)`;
+                }
+            }, 1000); 
+            $('#status').textContent = '分析中...';
+        }
 
-        // (進度條、模式切換、情境輸入等函式略)
-        // ... (省略無關代碼以保持簡潔，請確保您的完整版中有這些函式)
+        function stopProgressBar(isSuccess = true) {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+            $('#progress').style.width = isSuccess ? '100%' : '0%';
+            setTimeout(() => {
+                $('#progressBar').classList.add('hidden');
+                $('#progress').style.width = '0%';
+            }, 1500); 
+            $('#status').textContent = isSuccess ? '✅ 完成' : '❌ 失敗';
+        }
+        // --- 進度條控制函式結束 ---
 
+        // --- 模式切換邏輯 (確保存在) ---
         function setAnalysisMode(mode){
             analysisMode = mode;
             const singleBtn = $('#modeSingle');
@@ -239,15 +262,26 @@
                 singleBtn.classList.replace('text-white', 'text-slate-800');
             }
         }
-        $('#modeSingle').onclick=()=>setAnalysisMode('single');
-        $('#modeDual').onclick=()=>setAnalysisMode('dual');
 
-        // ... (getPayload 函式略)
+        // --- 情境輸入/預設邏輯 (確保存在) ---
+        function toggleSexOptions(){
+            if($('#context').value==='性愛'){ $('#sexOptions').classList.remove('hidden'); }
+            else { $('#sexOptions').classList.add('hidden'); $('#sexDetailInput').value=''; }
+        }
 
+        function getPayload(){
+            return {
+                mode:analysisMode,
+                aBeast:$('#aBeast').value, aKin:$('#aKin').value, aBranch:$('#aBranch').value,
+                bBeast:$('#bBeast').value, bKin:$('#bKin').value, bBranch:$('#bBranch').value,
+                context:$('#context').value, sexDetail:$('#sexDetailInput').value
+            };
+        }
+        
+        // --- 格式化輸出函式 (確保存在) ---
         function formatOutput(text){
             if(!text) return {html:'<p class="text-slate-500">無分析結果。</p>', scores:null, tags:[]};
             
-            // 修正 JSON 區塊正規表達式，以應對更複雜的 JSON 結構
             const jsonBlock = text.match(/```json\s*([\s\S]*?)\s*```/i);
             let scores=null,tags=[];
             let cleanText = text;
@@ -281,9 +315,8 @@
                         ${row('創新 innov','innov','#6366f1')}
                     </div>`;
                     
-                // 處理 tags，如果 tags 是物件，則轉為陣列標籤
                 if (tags && !Array.isArray(tags)) {
-                    tags = Object.values(tags).flat().filter(t => typeof t === 'string');
+                    tags = Object.values(tags).flat().filter(t => typeof t === 'string' && t.trim() !== '');
                 }
 
                 if(Array.isArray(tags) && tags.length > 0) scoresHTML+=`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`;
@@ -292,7 +325,7 @@
             return {html: html, scores, tags, webScoresHTML: scoresHTML};
         }
 
-        // --- 🎯 圖表繪製核心函式 (支援兩種圖表) 🎯 ---
+        // --- 圖表繪製核心函式 (確保存在) ---
         function renderChart(scores, type){
             const wrap = $('#chartContainer');
             
@@ -304,7 +337,7 @@
 
             if(!scores || Object.keys(scores).length === 0) return; 
             currentScores = scores; 
-            currentChartType = type; // 更新當前圖表類型
+            currentChartType = type; 
 
             const labels=['契合 fit','溝通 comm','節奏 pace','權責 account','信任 trust','創新 innov'];
             const data=[scores.fit,scores.comm,scores.pace,scores.account,scores.trust,scores.innov];
@@ -335,12 +368,12 @@
                         responsive:true, 
                         maintainAspectRatio: true, 
                         plugins:{ legend:{ display:false } },
-                        scales: type === 'radar' ? { // 雷達圖選項
+                        scales: type === 'radar' ? { 
                             r:{
                                 angleLines:{ display:true }, grid:{ color:'rgba(0, 0, 0, 0.1)' },
                                 pointLabels:{ font:{ size: 12 } }, suggestedMin:0, suggestedMax:100, ticks:{ stepSize:20 } 
                             }
-                        } : { // 長條圖選項
+                        } : { 
                             y: { suggestedMin: 0, suggestedMax: 100, ticks: { stepSize: 20 } },
                             x: { grid: { display: false } }
                         }
@@ -354,132 +387,155 @@
 
             } catch (e) {
                 console.error("Chart.js 繪製失敗:", e);
-                wrap.innerHTML = '<p class="text-red-500 text-sm p-4">圖表繪製失敗。錯誤訊息已輸出到控制台。</p>';
+                wrap.innerHTML = '<p class="text-red-500 text-sm p-4">圖表繪製失敗。請檢查 F12 控制台錯誤。</p>';
             }
         }
         
-        // 圖表類型切換事件
-        function setupChartSwitcher() {
-            const btns = $$('.chart-type-selector button');
-            btns.forEach(btn => {
+        // --- 核心事件監聽和初始化 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 設定報告時間
+            $('#reportTime').textContent = new Date().toLocaleDateString('zh-TW', {
+                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+            
+            // 模式切換按鈕
+            $('#modeSingle').onclick = () => setAnalysisMode('single');
+            $('#modeDual').onclick = () => setAnalysisMode('dual');
+            setAnalysisMode('dual'); // 預設雙人
+
+            // 情境預設按鈕
+            $$('.preset').forEach(b => b.onclick = () => { 
+                $('#context').value = b.textContent; 
+                toggleSexOptions(); 
+            });
+            $('#context').oninput = toggleSexOptions;
+            
+            // 性愛細節按鈕
+            $$('.sex-detail').forEach(b => b.onclick = () => { 
+                const current = $('#sexDetailInput').value.trim();
+                const detail = b.dataset.detail;
+                if(current) {
+                    if(!current.endsWith('；')) { $('#sexDetailInput').value += '；'; }
+                    if(!current.includes(detail)) { $('#sexDetailInput').value += detail; }
+                } else {
+                    $('#sexDetailInput').value = detail;
+                }
+            });
+
+            // 圖表類型切換
+            $$('.chart-type-selector button').forEach(btn => {
                 btn.onclick = () => {
                     if (!currentScores) return; 
-                    
                     const newType = btn.dataset.type;
-                    btns.forEach(b => b.classList.remove('active'));
+                    $$('.chart-type-selector button').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    
                     renderChart(currentScores, newType);
                 };
             });
-        }
-        setupChartSwitcher();
-        
-        // (美化面板、API 呼叫等函式略)
-        // ...
-
-        // API 呼叫的處理部分
-        $('#go').onclick=async()=>{
-            // ... (省略輸入檢查邏輯)
-
-            // 為了測試，我會用您的 JSON 範例模擬成功的 API 響應
-            // **請將這段模擬程式碼替換回您原有的 API 呼叫** // -------------------------------------------------------------
-            // --- 模擬成功的 API 響應開始 ---
-            const mockResponse = {
-                "text": "## 性愛分析綜合報告\n\n根據六獸「青龍」和六親「妻財」的人格特質，在性愛情境下，雙方展現出高信任與高創新度，顯示兩人渴望在親密關係中不斷探索新體驗。\n\n### 互動分析\n\n* **契合與信任**: 雙方情感連結分數高，能在高度信任的基礎上進行深入的肢體與情感交流。\n* **節奏與溝通**: 儘管溝通分數高，但節奏分數略低，暗示雙方可能需要更明確地確認彼此的生理和心理狀態，避免出現節奏不一致的情況。\n* **創新與權責**: 創新分數最高，顯示強烈的探索慾望。權責分數較低，建議雙方需要清晰的「角色扮演」或「劇本」來劃清主導與配合的責任。\n\n### 建議\n\n1.  **情境描述**: 建議採用「刺激的禁忌」主題，如在「戶外私密空間」中加入輕微的權力不對等元素。\n2.  **體位建議**: 由於雙方都喜歡挑戰，可嘗試需較高難度默契的體位，如女上式變化型，以增加互動默契。\n3.  **溝通引導**: 使用大量的**非語言暗示**和**低語呢喃**來引導，而非直接指令，這能更好地契合朱雀偏好情感交流的特質。\n\n```json\n{\n  \"scores\": {\n    \"fit\": 75,\n    \"comm\": 80,\n    \"pace\": 70,\n    \"account\": 65,\n    \"trust\": 80,\n    \"innov\": 85\n  },\n  \"tags\": [\n    \"情感連結 70\",\n    \"性慾強度 80\",\n    \"互動默契 75\",\n    \"溝通方式：基於對話的引導\",\n    \"互動風格：合作模式\"\n  ]\n}\n```\n",
-                // ... 其他數據
+            
+            // 美化面板切換
+            $('#toggleBeauty').onclick = () => {
+                $('#beautyPanel').classList.toggle('hidden');
             };
 
-            const data = mockResponse; 
-            // --- 模擬成功的 API 響應結束 ---
-            // -------------------------------------------------------------
+            // 背景設定
+            const body = $('body');
+            const bgColorInput = $('#bgColor');
+            const bgImageFile = $('#bgImageFile');
+            const clearBgBtn = $('#clearBg');
             
-            let rawText = data.text || data.choices?.[0]?.message?.content || JSON.stringify(data,null,2);
+            const updateBackground = () => {
+                const color = bgColorInput.value || '#f1f5f9';
+                body.style.backgroundColor = color;
+            };
 
-            const formatted=formatOutput(rawText);
-            
-            $('#result').innerHTML=formatted.html;
-            $('#webScoresAndTags').innerHTML=formatted.webScoresHTML; 
-            
-            // 🌟 核心：使用當前選擇的圖表類型來繪製 🌟
-            renderChart(formatted.scores, currentChartType); 
-            
-            stopProgressBar(true);
-        };
+            bgColorInput.oninput = updateBackground;
 
-        // ... (列印函式略)
+            bgImageFile.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        body.style.backgroundImage = `url('${event.target.result}')`;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                     body.style.backgroundImage = 'none';
+                }
+            };
 
-        // 必須確保在 document ready 時呼叫一次，以便初始載入
-        $('#go').onclick=async()=>{
-            // 這裡放 V5 中的 API 呼叫邏輯
-            // ... (為方便您測試，我將 V5 的 API 邏輯放回)
-            
-            const payload=getPayload();
-            let errorMessage = '';
-            const aComplete = payload.aBeast && payload.aKin && payload.aBranch;
-            const bComplete = payload.bBeast && payload.bKin && payload.bBranch;
+            clearBgBtn.onclick = () => {
+                bgImageFile.value = '';
+                bgColorInput.value = '#f1f5f9';
+                body.style.backgroundImage = 'none';
+                body.style.backgroundColor = '#f1f5f9';
+            };
+            updateBackground(); // 初始設置背景
 
-            if (!aComplete) { errorMessage = '請選滿我方「六獸、六親、地支」'; }
-            else if (payload.mode === 'dual' && !bComplete) { errorMessage = '雙人分析請選滿對方「六獸、六親、地支」'; }
-            else if (!payload.context) { errorMessage = '請輸入或選擇情境'; }
+            // 「一鍵分析」按鈕
+            $('#go').onclick = async () => {
+                const payload=getPayload();
+                let errorMessage = '';
+                const aComplete = payload.aBeast && payload.aKin && payload.aBranch;
+                const bComplete = payload.bBeast && payload.bKin && payload.bBranch;
 
-            if (errorMessage) { alert(errorMessage); return; }
+                if (!aComplete) { errorMessage = '請選滿我方「六獸、六親、地支」'; }
+                else if (payload.mode === 'dual' && !bComplete) { errorMessage = '雙人分析請選滿對方「六獸、六親、地支」'; }
+                else if (!payload.context) { errorMessage = '請輸入或選擇情境'; }
 
-            $('#result').innerHTML='<p class="text-slate-500">正在等待 AI 分析...</p>'; 
-            renderChart(null, currentChartType); // 清除舊圖表
-            $('#webScoresAndTags').innerHTML = '';
-            startProgressBar();
+                if (errorMessage) { alert(errorMessage); return; }
 
-            const apiUrl=(payload.context==='性愛')?'/api/sex-template':'/api/analyze';
+                $('#result').innerHTML='<p class="text-slate-500">正在等待 AI 分析...</p>'; 
+                renderChart(null, currentChartType); 
+                $('#webScoresAndTags').innerHTML = '';
+                startProgressBar();
 
-            try{
-                // **請將此處的 fetch 替換回您真實的後端 API 呼叫！**
-                const r=await fetch(apiUrl,{
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify(payload)
-                });
+                const apiUrl=(payload.context==='性愛')?'/api/sex-template':'/api/analyze';
+
+                try{
+                    // **請確保以下是您真實的 API 呼叫！**
+                    const r=await fetch(apiUrl,{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify(payload)
+                    });
+                    
+                    if(!r.ok) { throw new Error(`API 錯誤: ${r.statusText} (${r.status})`); }
+                    
+                    const data=await r.json();
+                    
+                    let rawText = data.text || data.choices?.[0]?.message?.content || JSON.stringify(data,null,2);
+
+                    const formatted=formatOutput(rawText);
+                    
+                    $('#result').innerHTML=formatted.html;
+                    $('#webScoresAndTags').innerHTML=formatted.webScoresHTML;
+                    renderChart(formatted.scores, currentChartType); 
+                    
+                    stopProgressBar(true);
+                }catch(e){ 
+                    $('#result').innerHTML=`<p class="text-red-600">❌ **分析失敗**：${String(e.message || e)}。請檢查後端服務是否運行及 API Key 是否正確。</p>`; 
+                    renderChart(null, currentChartType);
+                    stopProgressBar(false);
+                }
+            };
+
+            // 列印/PDF 按鈕
+            $('#print').onclick = () => {
+                 if (!currentScores) {
+                    alert("請先完成分析再列印報告！");
+                    return;
+                }
+                $('.print-header').style.display = 'block';
+                $('.print-header').style.textAlign = 'center';
                 
-                if(!r.ok) { throw new Error(`API 錯誤: ${r.statusText} (${r.status})`); }
+                window.print();
                 
-                const data=await r.json();
-                
-                let rawText = data.text || data.choices?.[0]?.message?.content || JSON.stringify(data,null,2);
-
-                const formatted=formatOutput(rawText);
-                
-                $('#result').innerHTML=formatted.html;
-                $('#webScoresAndTags').innerHTML=formatted.webScoresHTML;
-                renderChart(formatted.scores, currentChartType); 
-                
-                stopProgressBar(true);
-            }catch(e){ 
-                $('#result').innerHTML=`<p class="text-red-600">❌ **分析失敗**：${String(e.message || e)}。請檢查後端服務是否運行及 API Key 是否正確。</p>`; 
-                renderChart(null, currentChartType);
-                stopProgressBar(false);
-            }
-        };
-
-
-        // 美化面板邏輯 (略)
-        // ... (確保 V5 中的美化邏輯仍在您的完整檔案中)
-        
-        $('#print').onclick = () => {
-             if (!currentScores) {
-                alert("請先完成分析再列印報告！");
-                return;
-            }
-            // 臨時修改標題以方便列印
-            $('.print-header').style.display = 'block';
-            $('.print-header').style.textAlign = 'center';
-            
-            window.print();
-            
-            // 列印完成後恢復
-            setTimeout(() => {
-                $('.print-header').style.display = 'none';
-            }, 100); 
-        };
+                setTimeout(() => {
+                    $('.print-header').style.display = 'none';
+                }, 100); 
+            };
+        });
         
     </script>
 </body>
