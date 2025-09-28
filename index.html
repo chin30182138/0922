@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V7.5)</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V7.6)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
@@ -95,8 +95,8 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V7.5)</h1>
-            <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜雷達圖 + 分數條 + PDF 匯出</p>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V7.6)</h1>
+            <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜**美化功能修復**</p>
         </header>
 
         <div class="flex gap-4 flex-wrap no-print">
@@ -146,7 +146,7 @@
                 </div>
             <input id="context" class="w-full border rounded-lg p-2" placeholder="輸入自訂情境或分析主題…" />
             <div id="sexOptions" class="hidden mt-2 p-3 bg-red-50 border rounded-lg">
-                <label class="block mb-2 font-semibold text-red-700">性愛主題細節 (V7.5 新增)：</label>
+                <label class="block mb-2 font-semibold text-red-700">性愛主題細節 (V7.6 邏輯修正)：</label>
                 <div class="flex flex-wrap gap-2 mb-2">
                     <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="禁忌場景">禁忌場景</button>
                     <button class="sex-detail bg-red-100 px-3 py-1.5 rounded-full" data-detail="權力遊戲">權力遊戲</button>
@@ -214,7 +214,7 @@
     <script>
         const $ = s => document.querySelector(s);
         const $$ = s => document.querySelectorAll(s);
-        let analysisMode = 'personality'; // V7.5 預設為個性分析
+        let analysisMode = 'personality'; 
         const markdownConverter = new showdown.Converter(); 
 
         let radarChart = null; 
@@ -230,6 +230,11 @@
                 '性愛', '性愛場景與角色扮演', '性愛技巧與體位推薦', '性愛玩具與情境設置', '六獸 X 地支全劇本合集'
             ]
         };
+        // V7.6 新增：性愛相關情境的關鍵字
+        const SEX_CONTEXTS = [
+            '性愛', '性愛場景與角色扮演', '性愛技巧與體位推薦', '性愛玩具與情境設置', '六獸 X 地支全劇本合集'
+        ];
+
 
         // --- 進度條控制函式 ---
         let progressInterval = null;
@@ -263,7 +268,7 @@
         }
         // --- 進度條控制函式結束 ---
 
-        // --- 模式切換邏輯 (V7.5 更新) ---
+        // --- 模式切換邏輯 (V7.6 優化) ---
         function setAnalysisMode(mode){
             analysisMode = mode;
             const modes = {
@@ -289,11 +294,11 @@
             // 載入情境按鈕
             loadPresets(mode);
 
-            // 確保性愛細節區塊在非雙人模式下隱藏
+            // 確保性愛細節區塊在模式切換後正確隱藏/顯示
             toggleSexOptions(); 
         }
 
-        // V7.5 新增：載入情境按鈕
+        // 載入情境按鈕
         function loadPresets(mode) {
             const container = $('#presetContainer');
             container.innerHTML = ''; 
@@ -309,21 +314,21 @@
                 };
                 container.appendChild(btn);
             });
+            // 重設情境輸入框
+            $('#context').value = '';
         }
 
-        // --- 情境輸入/預設邏輯 (V7.5 更新) ---
+        // --- 情境輸入/預設邏輯 (V7.6 邏輯修正) ---
         function toggleSexOptions(){
             const context = $('#context').value;
-            const isSexContext = [
-                '性愛', '性愛場景與角色扮演', '性愛技巧與體位推薦', '性愛玩具與情境設置', '六獸 X 地支全劇本合集'
-            ].includes(context);
+            const isSexContext = SEX_CONTEXTS.includes(context);
             
+            // 關鍵修正：必須是雙人模式 且 選擇了性愛相關情境
             if(analysisMode === 'dual' && isSexContext){ 
                 $('#sexOptions').classList.remove('hidden'); 
             }
             else { 
                 $('#sexOptions').classList.add('hidden'); 
-                // $('#sexDetailInput').value=''; // 保持輸入，除非明確需要清除
             }
         }
 
@@ -336,7 +341,7 @@
             };
         }
         
-        // --- 格式化輸出函式 (V7.4 核心：確保內容完整，並精準移除 JSON 殘留) ---
+        // --- 格式化輸出函式 (保持不變) ---
         function formatOutput(text){
             if(!text) return {html:'<p class="text-slate-500">無分析結果。</p>', scores:null, tags:[]};
             
@@ -358,7 +363,6 @@
             
             let html = markdownConverter.makeHtml(cleanText);
 
-            // 關鍵修正：精準移除「JSON 輸出」這個標籤
             html = html.replace(/<p>[\s]*JSON[\s]*輸出[\s]*<\/p>/gi, '')
                        .replace(/<h[1-6]>[\s]*JSON[\s]*輸出[\s]*<\/h[1-6]>/gi, '')
                        .replace(/<p>\s*<\/p>/gi, ''); 
@@ -385,7 +389,7 @@
             return {html: html, scores, tags, webScoresHTML: scoresHTML};
         }
 
-        // --- 圖表繪製核心函式 (單人模式下隱藏分數條和圖表) ---
+        // --- 圖表繪製核心函式 (保持不變) ---
         function renderChart(scores, type){
             const wrap = $('#chartContainer');
             const scoresTagsWeb = $('#scoresTagsWeb');
@@ -397,7 +401,6 @@
             }
             wrap.innerHTML = ''; 
 
-            // 個性分析/單人情境不需要圖表和分數
             if(analysisMode === 'personality' || analysisMode === 'single' || !scores || Object.keys(scores).length === 0) {
                  wrap.style.display = 'none';
                  scoresTagsWeb.style.display = 'none';
@@ -475,7 +478,7 @@
             $('#modePersonality').onclick = () => setAnalysisMode('personality');
             $('#modeSingle').onclick = () => setAnalysisMode('single');
             $('#modeDual').onclick = () => setAnalysisMode('dual');
-            setAnalysisMode('personality'); // V7.5 預設為個性分析
+            setAnalysisMode('personality'); // V7.6 預設為個性分析
 
             // 情境輸入 oninput
             $('#context').oninput = toggleSexOptions;
@@ -508,9 +511,50 @@
                 $('#beautyPanel').classList.toggle('hidden');
             };
 
-            // 背景設定... (略，保持不變)
+            // --- V7.6 核心修正：背景設定功能修復 ---
+            const body = $('body');
+            const bgColorInput = $('#bgColor');
+            const bgImageFile = $('#bgImageFile');
+            const clearBgBtn = $('#clearBg');
+            
+            const updateBackground = () => {
+                const color = bgColorInput.value || '#f1f5f9';
+                // 修正：直接操作 style 屬性
+                body.style.backgroundColor = color;
+                // 確保 body 的 class 不會覆蓋背景色
+                body.classList.remove('bg-slate-50'); 
+            };
 
-            // V7.5 核心邏輯：一鍵分析
+            bgColorInput.oninput = updateBackground;
+
+            bgImageFile.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        // 修正：設置背景圖片
+                        body.style.backgroundImage = `url('${event.target.result}')`;
+                        body.style.backgroundSize = 'cover';
+                        body.style.backgroundPosition = 'center';
+                        body.style.backgroundAttachment = 'fixed';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                     body.style.backgroundImage = 'none';
+                }
+            };
+
+            clearBgBtn.onclick = () => {
+                bgImageFile.value = '';
+                bgColorInput.value = '#f1f5f9';
+                body.style.backgroundImage = 'none';
+                // 修正：清除後恢復初始狀態
+                body.style.backgroundColor = '#f1f5f9';
+                body.classList.add('bg-slate-50'); 
+            };
+            updateBackground(); // 初始設置背景
+
+            // V7.6 核心邏輯：一鍵分析 (模擬文本保持 V7.5 豐富度)
             $('#go').onclick = async () => {
                 const payload=getPayload();
                 let errorMessage = '';
@@ -537,7 +581,7 @@
                 const combinedB = `${payload.bBeast}-${payload.bKin}-${payload.bBranch}`;
 
                 if (payload.mode === 'personality') {
-                    // V7.5 新增：個性分析模擬報告
+                    // 個性分析模擬報告
                     rawText = `
 ## ${combinedA} 個性分析報告 (主題：${payload.context || '基礎個性'})
 
@@ -546,16 +590,15 @@
 **${payload.aKin}** 則代表了此人對**傳統、知識或依賴關係**的看重。這使他們在面對不確定性時，傾向於尋找過往的經驗或權威的指引。
 **${payload.aBranch}** 地支特徵則為此人帶來了**內在的情緒動能和社交傾向**。
 
-### 職涯發展建議 (豐富內容)
+### 職涯發展建議
 1.  **優勢領域**: 適合擔任需長期穩定、遵循規章的職位，如**風控管理、資深顧問、架構師**。其穩定性是團隊的定海神針。
 2.  **挑戰與盲點**: 由於過於依賴既有經驗，面對高變動和創新壓力時會感到不適。需刻意練習**敏捷思維**。
 3.  **人際風格**: 在團隊中是可靠的後盾，但表達情感較為內斂，應鼓勵其多主動表達支持而非僅僅默默付出。
 `;
-                    // 個性分析不需要分數和標籤
                     $('#webScoresAndTags').innerHTML = '<p class="text-sm text-slate-500 pt-3">個性分析著重於文本解讀，無六維度分數。</p>';
 
-                } else if (payload.context.includes('性愛')) {
-                    // V7.5 性愛報告：根據主題給予結構化內容
+                } else if (payload.mode === 'dual' && SEX_CONTEXTS.includes(payload.context)) {
+                    // 性愛報告：根據主題給予結構化內容
                     const theme = payload.context;
                     rawText = `
 ## 性愛綜合劇本與分析 (主題：${theme})
@@ -563,7 +606,7 @@
 ### 雙方情感連結與角色定位
 **${combinedA}** (我方) 傾向於扮演**主導者**，注重儀式感和過程中的細節掌控。**${combinedB}** (對方) 則表現出極高的**情感回應度**，渴望被強勢的慾望所引導。雙方的信任 (Trust) 分數極高，適合深度探索。
 
-### 🎭 ${theme} 執行指南 (V7.5 客製化內容)
+### 🎭 ${theme} 執行指南 (V7.6 客製化內容)
 
 #### 1. 情境設置與角色扮演
 * **場景建議**: 依據您的偏好「${payload.sexDetail || '禁忌場景'}」，建議選擇**摩天大樓**的頂樓套房，營造一種俯視世界和禁忌的刺激感。
@@ -599,21 +642,21 @@ JSON 輸出
 \`\`\`
 `;
                 } else if (payload.mode === 'dual') {
-                    // 模擬情境：跨部門協作 (雙人情境) - 保持 V7.4 豐富度
+                    // 模擬情境：跨部門協作 (雙人情境)
                     rawText = `
 ## 跨部門協作分析報告 (情境：${payload.context})
 
 ### 雙方溝通模式與契合度
-**我方 (${combinedA})**：傾向於以**長遠規劃**和**穩重**的方式主導討論，重視結構和傳統價值觀。他們在處理涉及資源分配和風險控制的議題時，表現出強大的穩定性和責任感。
-**對方 (${combinedB})**：充滿了**活力**和**急切的行動力**，追求立即的成果和高效的執行。他們擅長在壓力下推進工作，並能帶來快速的決策。但其缺點是可能因為過度關注短期目標，而忽略了細節的檢核。
+**我方 (${combinedA})**：傾向於以**長遠規劃**和**穩重**的方式主導討論，重視結構和傳統價值觀。
+**對方 (${combinedB})**：充滿了**活力**和**急切的行動力**，追求立即的成果和高效的執行。
 
 **溝通建議**：我方應多釋出彈性，對方應多提供結構化報告。雙方需建立共同的『效率指標』。
 
 ### 潛在風險與解決方案
 1.  **節奏衝突 (Pace 55%)**：我方的穩重與對方的急切會造成專案延誤或錯誤。
-    * **解決方案**：將專案拆分成**「我方負責的穩定區塊」**（如：預算審核、法律合規）和**「對方負責的快速區塊」**（如：市場調研、廣告素材產出）。
-2.  **創新與信任 (Innov 58%, Trust 60%)**：我方可能會質疑對方的決策速度和可行性，產生不信任。
-    * **解決方案**：設立**中立的審核節點**，由第三方主管進行仲裁。針對新方案，先讓對方在低風險小範圍進行**快速試驗**，用數據緩解我方的疑慮。
+    * **解決方案**：將專案拆分成**「我方負責的穩定區塊」**和**「對方負責的快速區塊」**。
+2.  **創新與信任 (Innov 58%, Trust 60%)**：我方可能會質疑對方的決策速度和可行性。
+    * **解決方案**：設立**中立的審核節點**，並讓對方在低風險小範圍進行**快速試驗**。
 
 JSON 輸出
 \`\`\`json
@@ -637,7 +680,7 @@ JSON 輸出
 \`\`\`
 `;
                 } else {
-                    // 模擬情境：單人情境 (例如 年度目標協調)
+                    // 模擬情境：單人情境
                     rawText = `
 ## ${payload.context || '年度目標協調'} 分析報告
 
@@ -645,19 +688,15 @@ JSON 輸出
 ${combinedA} 在此情境下，展現出高度的**溝通 (comm)** 意願和**契合 (fit)** 潛力。他們樂於協商，但需要明確的**權責 (account)** 界線。
 
 ### 建議策略
-1.  **優先事項確認**: 必須先與團隊定義好彼此的最終目標。這能有效提升 **契合 (Fit)** 分數。
-2.  **情緒管理**: 避免在達成一致前，過早地陷入細節爭論。應將爭論點分類，優先處理高風險項。
-3.  **創新探索**: 鼓勵團隊成員嘗試尋找既有框架之外的新方法，並確保有安全網以支撐失敗。
+1.  **優先事項確認**: 必須先與團隊定義好彼此的最終目標。
+2.  **情緒管理**: 避免在達成一致前，過早地陷入細節爭論。
+3.  **創新探索**: 鼓勵團隊成員嘗試尋找既有框架之外的新方法。
 `;
-                    // 單人情境不需要分數和標籤
                     $('#webScoresAndTags').innerHTML = '<p class="text-sm text-slate-500 pt-3">單人情境著重於策略建議，無六維度分數。</p>';
                 }
 
 
                 try{
-                    // 在此處插入您的實際 API 呼叫邏輯
-                    // ...
-
                     const formatted=formatOutput(rawText);
                     
                     $('#result').innerHTML=formatted.html;
@@ -675,7 +714,21 @@ ${combinedA} 在此情境下，展現出高度的**溝通 (comm)** 意願和**�
                 }
             };
 
-            // 列印/PDF 按鈕... (略，保持不變)
+            // 列印/PDF 按鈕... 
+            $('#print').onclick = () => {
+                 if (!currentScores && analysisMode === 'dual') {
+                    alert("請先完成分析再列印報告！");
+                    return;
+                }
+                $('.print-header').style.display = 'block';
+                $('.print-header').style.textAlign = 'center';
+                
+                window.print();
+                
+                setTimeout(() => {
+                    $('.print-header').style.display = 'none';
+                }, 100); 
+            };
         });
         
     </script>
