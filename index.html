@@ -10,7 +10,10 @@
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
     <style>
-        body { transition: background 0.3s ease; }
+        /* 讓 body 顏色切換更平滑 */
+        body { transition: background 0.3s ease; } 
+        
+        /* 分數條與標籤樣式 */
         .scores { display:grid; gap:8px; margin-top:20px; padding-top:15px; border-top:1px solid #e5e7eb; }
         .score { display:flex; align-items:center; gap:10px; font-size:14px }
         .bar { flex:1; height:12px; background:#e5e7eb; border-radius:9999px; overflow:hidden }
@@ -114,7 +117,7 @@
 
         <section class="bg-white p-5 rounded-xl shadow space-y-4">
             <div class="grid md:grid-cols-3 gap-6">
-                <div id="chartContainer" class="md:col-span-1 flex justify-center items-start">
+                <div id="chartContainer" class="md:col-span-1 flex justify-center items-start" style="min-height: 250px;">
                     </div>
                 <div class="md:col-span-2">
                     <div id="result" class="text-[15px] max-w-none">
@@ -129,9 +132,9 @@
         const $ = s => document.querySelector(s);
         const $$ = s => document.querySelectorAll(s);
         let analysisMode = 'single';
-        const markdownConverter = new showdown.Converter(); // 🌟 初始化 Markdown 轉換器 🌟
+        const markdownConverter = new showdown.Converter(); 
 
-        // --- 進度條控制函式 ---
+        // --- 進度條控制函式 (無變動) ---
         let progressInterval = null;
 
         function startProgressBar() {
@@ -169,11 +172,13 @@
         }
         // --- 進度條控制函式結束 ---
 
+        // 🌟 修正點 2：恢復背景切換邏輯 🌟
         function setAnalysisMode(mode){
             analysisMode = mode;
             const singleBtn = $('#modeSingle');
             const dualBtn = $('#modeDual');
             const sectionB = $('#sectionB');
+            const body = $('body'); // 獲取 body 元素
 
             if(mode === 'single'){ 
                 sectionB.style.display = 'none';
@@ -181,12 +186,21 @@
                 singleBtn.classList.replace('text-slate-800', 'text-white');
                 dualBtn.classList.replace('bg-indigo-600', 'bg-slate-200');
                 dualBtn.classList.replace('text-white', 'text-slate-800');
+                
+                // 單人模式：恢復背景為 bg-slate-50
+                body.classList.remove('bg-red-50'); 
+                body.classList.add('bg-slate-50');
+                
             } else { // dual
                 sectionB.style.display = 'block';
                 dualBtn.classList.replace('bg-slate-200', 'bg-indigo-600');
                 dualBtn.classList.replace('text-slate-800', 'text-white');
                 singleBtn.classList.replace('bg-indigo-600', 'bg-slate-200');
                 singleBtn.classList.replace('text-white', 'text-slate-800');
+                
+                // 雙人模式：恢復背景為 bg-red-50
+                body.classList.remove('bg-slate-50');
+                body.classList.add('bg-red-50'); 
             }
         }
         $('#modeSingle').onclick=()=>setAnalysisMode('single');
@@ -220,7 +234,7 @@
             };
         }
 
-        // 🌟 修正後的格式化函式：使用 Markdown 轉換器 🌟
+        // 格式化函式 (無變動)
         function formatOutput(text){
             if(!text) return {html:'<p class="text-slate-500">無分析結果。</p>', scores:null, tags:[]};
             
@@ -233,7 +247,7 @@
                 cleanText=text.replace(jsonBlock[0],'').trim();
             }
             
-            // ⭐️ 核心修正：將 Markdown 文本轉換為 HTML ⭐️
+            // Markdown 轉 HTML
             let html = markdownConverter.makeHtml(cleanText);
 
             // 組合分數條
@@ -262,6 +276,7 @@
         }
 
         let radarChart=null;
+        // 雷達圖繪製函式 (已確認核心邏輯正確)
         function renderRadar(scores){
             const wrap = $('#chartContainer');
             wrap.innerHTML = ''; // 清除舊圖表
@@ -271,23 +286,23 @@
             const labels=['契合 fit','溝通 comm','節奏 pace','權責 account','信任 trust','創新 innov'];
             const data=[scores.fit,scores.comm,scores.pace,scores.account,scores.trust,scores.innov];
             
-            // 🌟 雷達圖修正：確保每次都建立一個新的 Canvas 元素 🌟
+            // 確保每次都建立一個新的 Canvas 元素
             const canvas=document.createElement('canvas'); 
-            canvas.id = 'radarCanvas'; // 給定 ID
+            canvas.id = 'radarCanvas'; 
             wrap.appendChild(canvas);
             
             // 確保銷毀舊圖表實例
             if(radarChart) radarChart.destroy();
             
             // 繪製新圖表
-            radarChart=new Chart(canvas.getContext('2d'),{ // 傳遞 context
+            radarChart=new Chart(canvas.getContext('2d'),{ 
                 type:'radar',
                 data:{labels,datasets:[{
                     label:'六維度分析',
                     data,
                     fill:true,
-                    backgroundColor:'rgba(99,102,241,0.2)', // 填色
-                    borderColor:'rgba(99,102,241,1)', // 邊框色
+                    backgroundColor:'rgba(99,102,241,0.2)', 
+                    borderColor:'rgba(99,102,241,1)', 
                     pointBackgroundColor:'rgba(99,102,241,1)',
                     pointBorderColor:'#fff',
                     pointHoverBackgroundColor:'#fff',
@@ -295,7 +310,7 @@
                 }]},
                 options:{
                     responsive:true, 
-                    maintainAspectRatio: true, // 保持比例
+                    maintainAspectRatio: true, 
                     scales:{
                         r:{
                             angleLines:{ display:true },
@@ -303,11 +318,11 @@
                             pointLabels:{ font:{ size: 12 } },
                             suggestedMin:0,
                             suggestedMax:100,
-                            ticks:{ stepSize:20 } // 座標軸刻度
+                            ticks:{ stepSize:20 } 
                         }
                     },
                     plugins:{
-                        legend:{ display:false } // 隱藏圖例
+                        legend:{ display:false } 
                     }
                 }
             });
