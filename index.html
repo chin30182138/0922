@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V7.1)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
@@ -38,6 +38,16 @@
         #result ul, #result ol { padding-left: 25px; margin-bottom: 1rem; }
         #result ul { list-style-type: disc; }
         #result ol { list-style-type: decimal; }
+        
+        /* V7.1 修正：確保圖片能正確顯示且不破版 */
+        #result img {
+            max-width: 100%; /* 限制圖片最大寬度為容器寬度 */
+            height: auto;
+            margin: 15px 0; /* 增加圖片上下間距 */
+            display: block; /* 讓圖片獨佔一行 */
+            border-radius: 8px; /* 增加圓角 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
         
         /* 列印時，隱藏控制項，並強制顯示顏色 */
         @media print {
@@ -75,12 +85,12 @@
 <body class="bg-slate-50 text-slate-800">
     <div class="max-w-5xl mx-auto p-6 space-y-6">
         <header class="print-header">
-            <h1>仙人指路｜神獸七十二型人格分析報告v.10</h1>
+            <h1>仙人指路｜神獸七十二型人格分析報告</h1>
             <p style="font-size: 10pt; color: #555;">報告生成時間: <span id="reportTime"></span></p>
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格v.10</h1>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V7.1)</h1>
             <p class="text-slate-500 text-sm">支援人際分析與性愛分析｜雷達圖 + 分數條 + PDF 匯出</p>
         </header>
 
@@ -209,7 +219,7 @@
         let currentScores = null; 
         let currentChartType = 'radar'; 
 
-        // --- 進度條控制函式 (保持不變) ---
+        // --- 進度條控制函式 ---
         let progressInterval = null;
         function startProgressBar() {
             if (progressInterval) clearInterval(progressInterval);
@@ -241,7 +251,7 @@
         }
         // --- 進度條控制函式結束 ---
 
-        // --- 模式切換邏輯 (保持不變) ---
+        // --- 模式切換邏輯 ---
         function setAnalysisMode(mode){
             analysisMode = mode;
             const singleBtn = $('#modeSingle');
@@ -263,7 +273,7 @@
             }
         }
 
-        // --- 情境輸入/預設邏輯 (保持不變) ---
+        // --- 情境輸入/預設邏輯 ---
         function toggleSexOptions(){
             if($('#context').value==='性愛'){ $('#sexOptions').classList.remove('hidden'); }
             else { $('#sexOptions').classList.add('hidden'); $('#sexDetailInput').value=''; }
@@ -278,45 +288,34 @@
             };
         }
         
-        // --- 格式化輸出函式 (V10 核心修正：最保守的解析，確保內容不被誤刪) ---
+        // --- 格式化輸出函式 (V7.1 核心邏輯 - 保證文本完整，容忍 JSON 殘留) ---
         function formatOutput(text){
             if(!text) return {html:'<p class="text-slate-500">無分析結果。</p>', scores:null, tags:[]};
             
             const jsonBlock = text.match(/```json\s*([\s\S]*?)\s*```/i);
             let scores=null,tags=[];
-            let cleanText = text;
-
+            let cleanText = text; 
+            
             if(jsonBlock){
                 try{ 
                     const j=JSON.parse(jsonBlock[1]); 
                     scores=j.scores||{}; 
-                    // V10 修正: 確保能處理複雜的 JSON tags 結構
-                    let rawTags = j.tags || [];
-                    if (!Array.isArray(rawTags)) {
-                        rawTags = Object.values(rawTags).flat().filter(t => typeof t === 'string' && t.trim() !== '');
-                    }
-                    tags = rawTags;
+                    tags=Array.isArray(j.tags) ? j.tags : Object.values(j.tags || {}).flat().filter(t => typeof t === 'string' && t.trim() !== '');
                     
-                    // V10 關鍵修正：僅從文本中移除 JSON 程式碼區塊，保留其他所有文字
-                    cleanText=text.replace(jsonBlock[0],'').trim(); 
+                    // V7.1 依然執行刪除 JSON 區塊，這是防止整個區塊被當作程式碼高亮顯示
+                    cleanText = text.replace(jsonBlock[0],'').trim(); 
                 }catch(e){
                     console.error("JSON解析失敗", e);
                 }
             }
             
-            // 1. Markdown 轉換成 HTML
+            // Markdown 轉換
             let html = markdownConverter.makeHtml(cleanText);
 
-            // 2. ⭐️ 移除「JSON 輸出」的殘留標籤 (無論它們被轉換成了什麼標籤)
-            // 這是針對您截圖中看到的灰色標籤所做的最精準的字串替換。
-            // 它可以是 P 標籤，也可以是 H3 標籤。
+            // V7.1 額外處理：移除 JSON 輸出殘留的標題/段落，但不影響長篇文本
             html = html.replace(/<p>[\s]*JSON[\s]*輸出[\s]*<\/p>/gi, '')
-                       .replace(/<h[1-6]>[\s]*JSON[\s]*輸出[\s]*<\/h[1-6]>/gi, '')
-                       .replace(/<hr[\s]*\/?>/gi, '')
-                       // 處理 Showdown 將整個 ```json...``` 區塊當作程式碼區塊轉換後的結果
-                       .replace(/<pre><code class="json">[\s\S]*?<\/code><\/pre>/gi, ''); 
+                       .replace(/<h[1-6]>[\s]*JSON[\s]*輸出[\s]*<\/h[1-6]>/gi, '');
 
-            // 3. 處理分數條的 HTML 輸出
             let scoresHTML = '';
             if(scores && Object.keys(scores).length > 0){
                 const clamp=v=>Math.max(0,Math.min(100,Number(v)||0));
@@ -405,7 +404,7 @@
             }
         }
         
-        // --- 核心事件監聽和初始化 (保持不變) ---
+        // --- 核心事件監聽和初始化 ---
         document.addEventListener('DOMContentLoaded', () => {
             // 設定報告時間
             $('#reportTime').textContent = new Date().toLocaleDateString('zh-TW', {
@@ -522,9 +521,9 @@
                     let rawText = data.text || data.choices?.[0]?.message?.content || JSON.stringify(data,null,2);
                     */
                     
-                    // 暫時使用模擬數據，以確保前端邏輯正常
+                    // 暫時使用模擬數據，展示 V7.1 圖片功能
                     const mockResponse = {
-                        "text": "## 性愛分析綜合報告\n\n雙方情感連結分數高，能在高度信任的基礎上進行深入交流。\n\n### 建議\n\n1.  **情境描述**: 建議採用「刺激的禁忌」主題。\n2.  **體位建議**: 可嘗試需較高難度默契的體位。\n\nJSON 輸出\n```json\n{\n  \"scores\": {\n    \"fit\": 75,\n    \"comm\": 80,\n    \"pace\": 70,\n    \"account\": 65,\n    \"trust\": 80,\n    \"innov\": 85\n  },\n  \"tags\": [\n    \"情感連結 70\",\n    \"性慾強度 80\",\n    \"互動默契 75\"\n  ]\n}\n```\n",
+                        "text": "## 性愛分析綜合報告\n\n雙方情感連結分數高，能在高度信任的基礎上進行深入交流。\n\n### 建議\n\n1.  **情境描述**: 建議採用「刺激的禁忌」主題。\n2.  **體位建議**: 可嘗試需較高難度默契的體位。\n\n![高難度默契體位示意圖](https://placehold.co/400x250/E0F7FA/00796B?text=體位示意圖)\n\nJSON 輸出\n```json\n{\n  \"scores\": {\n    \"fit\": 75,\n    \"comm\": 80,\n    \"pace\": 70,\n    \"account\": 65,\n    \"trust\": 80,\n    \"innov\": 85\n  },\n  \"tags\": [\n    \"情感連結 70\",\n    \"性慾強度 80\",\n    \"互動默契 75\"\n  ]\n}\n```\n",
                     };
                     
                     await new Promise(resolve => setTimeout(resolve, 1500)); // 模擬 API 延遲
