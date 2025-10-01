@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V34.0 最終穩定版)</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V29.0 最終圖表修復)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
     <style>
-        /* --- 介面核心樣式 (確保 V7.9 介面重現) --- */
+        /* --- 介面核心樣式 (V7.9 樣式) --- */
         body { 
             transition: background-color 0.5s ease, background-image 0.5s ease; 
             background-size: cover; 
@@ -33,21 +33,14 @@
         
         /* --- AI 輸出樣式 (確保報告格式化) --- */
         #result h3 { font-size: 1.3rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 3px solid #6366f1; padding-bottom: 5px; color: #4338ca; }
-        #result h4 { font-size: 1.15rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.4rem; }
+        #result h4 { font-size: 1.15rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.4rem; }
         #result p { margin-bottom: 1rem; line-height: 1.6; }
         #result ul, #result ol { padding-left: 25px; margin-bottom: 1rem; }
         #result ul { list-style-type: disc; }
         #result ol { list-style-type: decimal; }
         
         /* 確保圖片不破版 */
-        #result img {
-            max-width: 100%;
-            height: auto;
-            margin: 0;
-            display: inline;
-            border-radius: 0;
-            box-shadow: none;
-        }
+        #result img { max-width: 100%; height: auto; margin: 0; display: inline; border-radius: 0; box-shadow: none; }
         
         /* --- 列印和圖表樣式 (確保圖表顯示) --- */
         @media print {
@@ -103,8 +96,8 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V12.3 最終穩定版)</h1>
-            <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜**已大幅強化圖表數據解析**</p>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V29.0 最終圖表修復)</h1>
+            <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜**已修復 API 連線與 JSON 解析問題**</p>
         </header>
 
         <div class="flex gap-4 flex-wrap no-print">
@@ -260,10 +253,10 @@
             ]
         };
         const SEX_CONTEXTS = ['性愛'];
-        const API_PROXY_ENDPOINT = '/api/analyze';
+        const API_PROXY_ENDPOINT = '/api/analyze'; 
 
 
-        // --- 進度條控制函式 ---
+        // --- 進度條控制函式 (保持 V7.9 的邏輯) ---
         let progressInterval = null;
         function startProgressBar() {
             if (progressInterval) clearInterval(progressInterval);
@@ -304,9 +297,10 @@
                 'dual': $('#modeDual')
             };
             const sectionB = $('#sectionB');
+            const scoresTagsWeb = $('#scoresTagsWeb');
+            const chartTypeSelector = $('.chart-type-selector');
             const chartContainer = $('#chartContainer');
             const chartPlaceholder = $('#chartPlaceholder');
-            const chartTypeSelector = $('.chart-type-selector');
 
 
             Object.keys(modes).forEach(key => {
@@ -640,11 +634,14 @@
                 const aComplete = payload.aBeast && payload.aKin && payload.aBranch;
                 const bComplete = payload.bBeast && payload.bKin && payload.bBranch;
 
-                // --- 前端基本驗證 ---
+                // --- V34.0 邏輯修正：檢查六獸、六親不得相同，但地支可以 ---
                 if (!aComplete) { errorMessage = '請選滿我方「六獸、六親、地支」'; }
                 else if (payload.mode === 'dual' && !bComplete) { errorMessage = '雙人分析請選滿對方「六獸、六親、地支」'; }
                 else if (payload.mode !== 'personality' && !payload.context) { errorMessage = '請輸入或選擇情境'; }
                 else if (payload.context === '性愛' && payload.mode === 'dual' && !payload.sexDetail) { errorMessage = '您選擇了性愛情境，請點選或輸入細節按鈕，以供 AI 參考建議。'; }
+                else if (payload.mode === 'dual' && (payload.aBeast === payload.bBeast && payload.aKin === payload.bKin)) {
+                    errorMessage = '雙人分析中，「六獸」或「六親」的組合不可完全相同！請選擇不同的六獸或六親。';
+                }
 
                 if (errorMessage) { alert(errorMessage); return; }
 
@@ -673,6 +670,7 @@
                     promptText += `性愛劇本細節要求: ${payload.sexDetail}\n`;
                 }
 
+
                 try {
                     const response = await fetch('/api/analyze', {
                         method: 'POST',
@@ -680,7 +678,7 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            prompt: promptText 
+                            prompt: promptText // 發送給後端 Function
                         })
                     });
 
