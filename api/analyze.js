@@ -1,10 +1,18 @@
-// api/analyze.js - V31.0 最終穩定版 (使用 OpenAI API Key)
+// api/analyze.js - V32.0 最終穩定版 (使用 OpenAI 官方 SDK)
 
-// V31.0 核心：優先使用 OPENAI_API_KEY
+// 導入 OpenAI SDK
+const OpenAI = require('openai'); 
+
+// 確保 Vercel 環境變數中 OPENAI_API_KEY 已設定
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY; 
-const OPENAI_API_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
+const FINAL_MODEL = 'gpt-3.5-turbo'; 
 
-const FINAL_MODEL = 'gpt-3.5-turbo'; // 鎖定速度最快，解決超時問題
+const openai = new OpenAI({
+    // SDK 會自動從 Vercel 環境變數中獲取 Key
+    apiKey: OPENAI_API_KEY, 
+});
+
+const SYSTEM_PROMPT = "你是一位精通中國古代《神獸七十二型人格》理論的資深分析師。你的任務是根據用戶提供的『六獸-六親-地支』組合和情境，輸出深度且具體的分析報告。報告必須專業、嚴謹，並且字數至少 800 字。";
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -23,48 +31,32 @@ export default async function handler(req, res) {
         }
         
         // 呼叫 OpenAI API
-        const response = await fetch(OPENAI_API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}` 
-            },
-            body: JSON.stringify({
-                model: FINAL_MODEL,
-                messages: [
-                    {
-                        role: "system",
-                        content: "你是一位精通易學、心理學和企業管理的專業顧問，專門提供仙人指路神獸七十二型人格的分析報告。你必須使用繁體中文和 Markdown 格式輸出專業報告，並在結尾嚴格遵守使用者提供的 JSON 結構來輸出六維度分數和標籤。",
-                    },
-                    {
-                        role: "user",
-                        content: prompt,
-                    }
-                ],
-                temperature: 0.7,
-                max_tokens: 3000, 
-            })
+        const completion = await openai.chat.completions.create({
+            model: FINAL_MODEL,
+            messages: [
+                {
+                    role: "system",
+                    content: SYSTEM_PROMPT,
+                },
+                {
+                    role: "user",
+                    content: prompt,
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 3000,
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            const status = response.status;
-            
-            console.error("OpenAI API Error:", errorData.error ? errorData.error.message : response.statusText);
-
-            return res.status(status).json({
-                error: `OpenAI API 請求失敗 (HTTP ${status})`,
-                detail: errorData.error ? errorData.error.message : response.statusText
-            });
-        }
-
-        const data = await response.json();
-        
-        // 返回給前端 index.html 期望的格式
-        res.status(200).json(data);
+        // 成功響應
+        res.status(200).json(completion);
 
     } catch (error) {
-        console.error("Serverless Function Internal Error:", error);
-        res.status(500).json({ error: 'Internal Server Error', detail: error.message });
+        console.error("OpenAI API Error:", error.message || error);
+        
+        // 處理 API 請求失敗
+        res.status(500).json({ 
+            error: '分析服務器錯誤', 
+            detail: error.message || '無法連線到 AI 服務。' 
+        });
     }
 }
