@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路｜神獸七十二型人格分析報告 (V35.0)</title>
+    <title>仙人指路｜神獸七十二型人格分析報告 (V30.0 最終版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
@@ -23,7 +23,7 @@
             border-radius: 12px;
         }
 
-        /* --- 報告文本樣式 (V38.0 專業排版) --- */
+        /* --- 報告文本樣式 (專業排版) --- */
         #result {
             font-size: 16px;
             line-height: 1.7;
@@ -38,7 +38,7 @@
             margin-bottom: 0.8rem; 
             border-bottom: 4px solid #3b82f6; 
             padding-bottom: 6px; 
-            color: #1e3a8a; 
+            color: #1e3a8a;
         }
         
         /* 次級標題 (類似履歷中的 職稱/公司名稱) */
@@ -91,6 +91,16 @@
             border-radius: 0.5rem;
             margin-top: 1rem;
         }
+        
+        /* ⭐️ V30.0 品牌視覺修正：報告頂部的主標題樣式 ⭐️ */
+        #reportTitle {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #1e3a8a;
+            margin-bottom: 1rem;
+            padding-bottom: 5px;
+            border-bottom: 3px solid #6366f1;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -101,8 +111,8 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V38.0 最終版)</h1>
-            <p class="text-slate-500 text-sm">✨ **已專注於深度文本報告** (移除所有圖表和分數相關 UI)</p>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V30.0 最終版)</h1>
+            <p class="text-slate-500 text-sm">✨ **已專注於深度文本報告** (遵循專業排版範本)</p>
         </header>
 
         <div class="flex gap-4 flex-wrap no-print">
@@ -220,11 +230,11 @@
                 
                 <div class="md:col-span-1">
                     <div id="webScoresAndTags">
+                        <h2 id="reportBrandTitle" class="text-xl font-extrabold text-gray-800 mb-4 pb-2 border-b-2 border-indigo-200"></h2>
                         <p class="text-slate-500">選擇六獸、六親、地支和情境後，點擊「一鍵分析」開始。</p>
                     </div>
                     <div id="result" class="text-[16px] max-w-none pt-4 border-t border-gray-200 mt-4">
-                        <p class="text-center text-slate-500 p-4">請選擇分析模式、填寫六獸六親地支後，點擊「一鍵分析」以生成報告。</p>
-                    </div>
+                        </div>
                 </div>
             </div>
         </section>
@@ -251,7 +261,7 @@
         const SEX_CONTEXTS = ['性愛'];
 
 
-        // --- 進度條控制函式 ---
+        // --- 進度條控制函式 (保持 V7.9 的邏輯) ---
         let progressInterval = null;
         function startProgressBar() {
             if (progressInterval) clearInterval(progressInterval);
@@ -351,19 +361,19 @@
         }
         
         // --- V35.0 簡化：現在只提取文本，不再提取分數 ---
-        function formatOutput(text) {
+        function formatOutput(text, payload) {
             if (!text) return { html: '<p class="text-slate-500">無分析結果。</p>', scores: null, tags: null, webScoresHTML: '<p class="text-slate-500">無法獲取分析內容。</p>' };
 
             let scores = null;
             let tags = null;
             let cleanText = text;
 
-            // 嘗試找到 JSON 區塊並移除（防止 JSON 程式碼塊干擾報告）
+            // 嘗試找到 JSON 區塊並移除
             const matchJsonBlock = text.match(/```json\s*([\s\S]*?)\s*```/i);
             if (matchJsonBlock && matchJsonBlock[1]) {
                 cleanText = text.replace(matchJsonBlock[0], '').trim();
                 
-                // 嘗試提取 tags，但忽略 scores
+                // 嘗試提取 tags
                 try {
                     const j = JSON.parse(matchJsonBlock[1].trim());
                     tags = Array.isArray(j.tags) ? j.tags : null;
@@ -386,20 +396,38 @@
                      .replace(/<h[1-6]>[\s]*JSON[\s]*輸出[\s]*<\/h[1-6]>/gi, '')
                      .replace(/<p>\s*<\/p>/gi, '');
 
-            // V35.0: 移除所有分數相關的 HTML 輸出
-            let webScoresHTML = '<p class="text-slate-500">此模式專注於文本分析。</p>';
+            // V38.0 報告頂部品牌標語
+            let mainTitle = '';
+            if (payload.mode === 'dual' && payload.context === '性愛') {
+                 mainTitle = `仙人指路：神獸七十二型人格在性愛中的應用`;
+            } else if (payload.mode === 'dual') {
+                 mainTitle = `仙人指路：神獸七十二型人格 - 雙人職場協作報告`;
+            } else if (payload.mode === 'personality') {
+                 mainTitle = `仙人指路：神獸七十二型人格 - 個性深度分析`;
+            } else {
+                 mainTitle = `仙人指路：神獸七十二型人格 - ${payload.context} 策略報告`;
+            }
+
+            // V38.0: 移除所有分數相關的 HTML 輸出
+            let webScoresHTML = '';
             
-            if (Array.isArray(tags) && tags.length > 0) {
+            if (ArrayOf(tags) && tags.length > 0) {
                  webScoresHTML = `<div style="margin-top: 15px;"><h4 style="margin-bottom: 5px;">關鍵標籤 (AI 建議)</h4><div class="tags">${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div></div>`;
             }
+            
+            // 將報告主標題和副標題 HTML 插入最頂端
+            const reportHeaderHTML = `<h2 id="reportTitle" class="text-xl font-extrabold text-gray-800 mb-4 pb-2 border-b-2 border-indigo-200">${mainTitle}</h2>`;
+            html = reportHeaderHTML + html;
 
 
             return { html: html, scores: null, tags: null, webScoresHTML: webScoresHTML };
         }
 
-        // 移除所有圖表相關函數
+        // V36.1 移除所有圖表相關函數
         function renderChart(scores, type){
              // 函數內容為空，不再執行任何繪圖操作
+             const wrap = $('#chartContainer');
+             wrap.innerHTML = '<div id="chartPlaceholder" class="text-center text-slate-500 p-4">圖表功能已停用，專注於文本分析。</div>';
         }
         
         // --- 核心事件監聽和初始化 ---
@@ -488,7 +516,7 @@
                 const aComplete = payload.aBeast && payload.aKin && payload.aBranch;
                 const bComplete = payload.bBeast && payload.bKin && payload.bBranch;
 
-                // --- 步驟 1：檢查輸入完整性 ---
+                // --- V34.0 邏輯修正：檢查六獸、六親不得相同，但地支可以 ---
                 if (!aComplete) { errorMessage = '請選滿我方「六獸、六親、地支」'; }
                 else if (payload.mode === 'dual' && !bComplete) { errorMessage = '雙人分析請選滿對方「六獸、六親、地支」'; }
                 else if (payload.mode !== 'personality' && !payload.context) { errorMessage = '請輸入或選擇情境'; }
@@ -528,7 +556,7 @@
                     promptText += `性愛劇本細節要求: ${payload.sexDetail}\n`;
                 }
                 
-                // V35.1: 提醒 AI 只需要文本，不需要 JSON
+                // V38.0: 移除分數要求，專注文本
                 promptText += `\n請輸出專業、深入、長度超過 800 字的繁體中文分析報告，嚴格使用 Markdown 格式分段落、標題與清單。請勿在報告中包含任何 JSON 程式碼塊。`;
 
 
@@ -579,8 +607,8 @@
                         return;
                     }
 
-                    // --- 渲染 HTML 內容 (此時只剩下文本) ---
-                    const { html, webScoresHTML } = formatOutput(aiContent);
+                    // --- 渲染 HTML 內容 (V38.0 報告排版) ---
+                    const { html, webScoresHTML } = formatOutput(aiContent, payload);
 
                     $('#result').innerHTML = html;
                     $('#webScoresAndTags').innerHTML = webScoresHTML;
