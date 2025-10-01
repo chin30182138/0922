@@ -1,9 +1,9 @@
-// api/analyze.js - V23.1 最終穩定版 (修復 Gemini API 呼叫結構)
+// api/analyze.js - V23.2 最終修復版 (修正 Gemini API JSON 結構錯誤)
 
+// 獲取 Vercel 環境變數中設置的 Gemini API Key (兼容舊的 OPENAI_API_KEY 名稱)
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
 const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
 
-// 由於您已經排除了所有底層錯誤，我們這裡使用最標準的 Node.js 函式寫法
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         res.setHeader('Allow', 'POST');
@@ -21,26 +21,26 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Missing required parameter: prompt.' });
         }
         
-        // V23.1 核心修正：將參數平鋪到頂層，並移除不受支持的 'config' 區塊
+        // V23.2 核心修正：將所有配置參數正確包裹在 generationConfig 內
         const requestBody = {
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.5-pro', // 鎖定為 Gemini 2.5 Pro
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            // 直接將參數放在頂層
-            temperature: 0.7,
-            maxOutputTokens: 3000,
             
-            // 關鍵：將 JSON 輸出指令移到 generationConfig，這是 Gemini 推薦的做法
-            config: { 
-                responseMimeType: "application/json" 
+            // ⭐ V23.2 關鍵修正：將參數移動到 generationConfig 物件中
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 3000,
+                responseMimeType: "application/json" // 告訴 Gemini 輸出 JSON
             }
+            // 移除 'config' 區塊，解決 Unknown name "config" 錯誤
         };
 
-        // Vercel Serverless Function 呼叫 Gemini API
+        // 呼叫 Gemini API
         const response = await fetch(GEMINI_API_ENDPOINT, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Goog-Api-Key': GEMINI_API_KEY 
+                'X-Goog-Api-Key': GEMINI_API_KEY // Gemini API 使用 'X-Goog-Api-Key'
             },
             body: JSON.stringify(requestBody)
         });
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
              return res.status(500).json({ error: 'AI 輸出內容錯誤', detail: 'Gemini 未返回預期內容。' });
         }
         
-        // 返回給前端 index.html 期望的格式 (choices 陣列)
+        // 返回給前端 index.html 期望的格式
         const finalResponse = {
             choices: [{ message: { content: geminiContent } }]
         };
