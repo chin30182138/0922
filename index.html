@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V35.0 最終邏輯修復版)</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V28.1 最終穩定版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
@@ -62,8 +62,8 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V35.0 最終邏輯修復版)</h1>
-            <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜**已修復六獸/六親重複問題**</p>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V28.1 最終穩定版)</h1>
+            <p class="text-slate-500 text-sm">✨ **已修復六獸/六親單獨重複問題**</p>
         </header>
 
         <div class="flex gap-4 flex-wrap no-print">
@@ -444,7 +444,7 @@
             };
             updateBackground(); 
 
-            // V35.1 核心邏輯：正確呼叫 API
+            // V27.1 核心邏輯：修復「六獸」重複警告
             $('#go').onclick = async () => {
                 const payload = getPayload();
                 let errorMessage = '';
@@ -456,9 +456,15 @@
                 else if (payload.mode === 'dual' && !bComplete) { errorMessage = '雙人分析請選滿對方「六獸、六親、地支」'; }
                 else if (payload.mode !== 'personality' && !payload.context) { errorMessage = '請輸入或選擇情境'; }
                 else if (payload.context === '性愛' && payload.mode === 'dual' && !payload.sexDetail) { errorMessage = '您選擇了性愛情境，請點選或輸入細節按鈕，以供 AI 參考建議。'; }
-                else if (payload.mode === 'dual' && (payload.aBeast === payload.bBeast && payload.aKin === payload.bKin)) {
-                    errorMessage = '雙人分析中，「六獸」或「六親」的組合不可完全相同！請選擇不同的六獸或六親。';
+                
+                // ⭐ V28.1 最終邏輯修正：檢查六獸 AND 六親 是否單獨相同 ⭐
+                else if (payload.mode === 'dual' && payload.aBeast === payload.bBeast) {
+                    errorMessage = '雙人分析中，我方與對方的「六獸」不可相同！請選擇不同的六獸。';
                 }
+                else if (payload.mode === 'dual' && payload.aKin === payload.bKin) {
+                    errorMessage = '雙人分析中，我方與對方的「六親」不可相同！請選擇不同的六親。';
+                }
+
 
                 if (errorMessage) { alert(errorMessage); return; }
 
@@ -486,8 +492,7 @@
                     promptText += `性愛劇本細節要求: ${payload.sexDetail}\n`;
                 }
                 
-                // V35.1: 提醒 AI 只需要文本，不需要 JSON
-                promptText += `\n請輸出專業、深入、長度超過 800 字的繁體中文分析報告，嚴格使用 Markdown 格式分段落、標題與清單。請勿在報告中包含任何 JSON 程式碼塊。`;
+                promptText += `\n請輸出專業、深入、長度超過 800 字的繁體中文分析報告，嚴格使用 Markdown 格式分段落、標題與清單。報告必須以「仙人指路」為報告主旨，請勿在報告中包含任何 JSON 程式碼塊。`;
 
 
                 try {
@@ -537,7 +542,7 @@
                         return;
                     }
 
-                    // --- 使用強化解析邏輯處理結果 (此時只剩下文本) ---
+                    // --- 渲染 HTML 內容 (此時只剩下文本) ---
                     const { html, webScoresHTML } = formatOutput(aiContent);
 
                     $('#result').innerHTML = html;
