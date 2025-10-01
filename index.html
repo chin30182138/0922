@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V38.0 最終排版)</title>
+    <title>仙人指路｜神獸七十二型人格分析報告 (V35.0)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
@@ -23,7 +23,7 @@
             border-radius: 12px;
         }
 
-        /* ⭐️ V38.0 核心修正：履歷表式報告排版 ⭐️ */
+        /* --- 報告文本樣式 (V38.0 專業排版) --- */
         #result {
             font-size: 16px;
             line-height: 1.7;
@@ -32,13 +32,13 @@
         
         /* 報告主要標題 (類似履歷中的 教育背景/工作經歷) */
         #result h3 { 
-            font-size: 1.6rem; /* 增大字體 */
-            font-weight: 900; /* 加粗 */
+            font-size: 1.6rem; 
+            font-weight: 900; 
             margin-top: 2rem; 
             margin-bottom: 0.8rem; 
-            border-bottom: 4px solid #3b82f6; /* 核心藍色底線 */
+            border-bottom: 4px solid #3b82f6; 
             padding-bottom: 6px; 
-            color: #1e3a8a; /* 深藍色，專業感 */
+            color: #1e3a8a; 
         }
         
         /* 次級標題 (類似履歷中的 職稱/公司名稱) */
@@ -47,14 +47,14 @@
             font-weight: 700; 
             margin-top: 1.5rem; 
             margin-bottom: 0.5rem; 
-            color: #4b5563; /* 灰色，層次感 */
+            color: #4b5563;
         }
         
         /* 清單樣式 (強調條列重點) */
         #result ul, #result ol { 
             padding-left: 20px; 
             margin-bottom: 1.2rem;
-            list-style-type: none; /* 移除預設點 */
+            list-style-type: none;
         }
         #result li {
             margin-bottom: 10px;
@@ -101,8 +101,8 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V38.0 最終排版)</h1>
-            <p class="text-slate-500 text-sm">✨ **已專注於深度文本報告** (遵循專業排版範本)</p>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V38.0 最終版)</h1>
+            <p class="text-slate-500 text-sm">✨ **已專注於深度文本報告** (移除所有圖表和分數相關 UI)</p>
         </header>
 
         <div class="flex gap-4 flex-wrap no-print">
@@ -223,7 +223,8 @@
                         <p class="text-slate-500">選擇六獸、六親、地支和情境後，點擊「一鍵分析」開始。</p>
                     </div>
                     <div id="result" class="text-[16px] max-w-none pt-4 border-t border-gray-200 mt-4">
-                        </div>
+                        <p class="text-center text-slate-500 p-4">請選擇分析模式、填寫六獸六親地支後，點擊「一鍵分析」以生成報告。</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -355,7 +356,6 @@
 
             let scores = null;
             let tags = null;
-            let jsonText = null;
             let cleanText = text;
 
             // 嘗試找到 JSON 區塊並移除（防止 JSON 程式碼塊干擾報告）
@@ -397,11 +397,9 @@
             return { html: html, scores: null, tags: null, webScoresHTML: webScoresHTML };
         }
 
-        // V36.1 移除所有圖表相關函數
+        // 移除所有圖表相關函數
         function renderChart(scores, type){
              // 函數內容為空，不再執行任何繪圖操作
-             const wrap = $('#chartContainer');
-             wrap.innerHTML = '<div id="chartPlaceholder" class="text-center text-slate-500 p-4">圖表功能已停用，專注於文本分析。</div>';
         }
         
         // --- 核心事件監聽和初始化 ---
@@ -490,18 +488,19 @@
                 const aComplete = payload.aBeast && payload.aKin && payload.aBranch;
                 const bComplete = payload.bBeast && payload.bKin && payload.bBranch;
 
-                // --- V34.0 邏輯修正：檢查六獸、六親不得相同，但地支可以 ---
+                // --- 步驟 1：檢查輸入完整性 ---
                 if (!aComplete) { errorMessage = '請選滿我方「六獸、六親、地支」'; }
                 else if (payload.mode === 'dual' && !bComplete) { errorMessage = '雙人分析請選滿對方「六獸、六親、地支」'; }
                 else if (payload.mode !== 'personality' && !payload.context) { errorMessage = '請輸入或選擇情境'; }
                 else if (payload.context === '性愛' && payload.mode === 'dual' && !payload.sexDetail) { errorMessage = '您選擇了性愛情境，請點選或輸入細節按鈕，以供 AI 參考建議。'; }
+                
+                // ⭐ V28.1 最終邏輯修正：檢查「六獸」AND「六親」是否單獨重複 ⭐
                 else if (payload.mode === 'dual' && payload.aBeast === payload.bBeast) {
                     errorMessage = '雙人分析中，「六獸」不可相同！請選擇不同的六獸。';
                 }
                 else if (payload.mode === 'dual' && payload.aKin === payload.bKin) {
                     errorMessage = '雙人分析中，「六親」不可相同！請選擇不同的六親。';
                 }
-
 
                 if (errorMessage) { alert(errorMessage); return; }
 
@@ -515,7 +514,7 @@
                 const combinedA = `${payload.aBeast}-${payload.aKin}-${payload.aBranch}`;
                 const combinedB = `${payload.bBeast}-${payload.bKin}-${payload.bBranch}`;
                 
-                let promptText = `請根據以下資訊，輸出深度報告與六維度分數：\n`;
+                let promptText = `請根據以下資訊，輸出深度報告：\n`;
                 promptText += `分析模式: ${payload.mode === 'personality' ? '個性分析' : (payload.mode === 'single' ? '單人情境' : '雙人情境')}\n`;
                 promptText += `我方組合 (A): ${combinedA}\n`;
                 
