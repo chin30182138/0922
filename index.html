@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V39.0 最終修正)</title>
+    <title>仙人指路｜神獸七十二型人格分析報告 (V35.0)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
@@ -23,25 +23,25 @@
             border-radius: 12px;
         }
 
-        /* ⭐️ V39.0 修正：報告文本樣式 (專業排版) ⭐️ */
+        /* --- 報告文本樣式 (V38.0 專業排版) --- */
         #result {
             font-size: 16px;
             line-height: 1.7;
             color: #333;
         }
         
-        /* 報告主要標題 (對應 Markdown ### 或 ##) */
+        /* 報告主要標題 (類似履歷中的 教育背景/工作經歷) */
         #result h3 { 
-            font-size: 1.6rem; /* 增大字體 */
-            font-weight: 900; /* 極粗 */
+            font-size: 1.6rem; 
+            font-weight: 900; 
             margin-top: 2rem; 
             margin-bottom: 0.8rem; 
-            border-bottom: 4px solid #3b82f6; /* 核心藍色底線 */
+            border-bottom: 4px solid #3b82f6; 
             padding-bottom: 6px; 
-            color: #1e3a8a; /* 深藍色，專業感 */
+            color: #1e3a8a; 
         }
         
-        /* 次級標題 (V39.0: 修正次級標題，避免與主標混淆) */
+        /* 次級標題 (類似履歷中的 職稱/公司名稱) */
         #result h4 { 
             font-size: 1.25rem; 
             font-weight: 700; 
@@ -51,9 +51,23 @@
         }
         
         /* 清單樣式 (強調條列重點) */
-        #result ul, #result ol { padding-left: 25px; margin-bottom: 1.2rem; }
-        #result ul { list-style-type: disc; }
-        #result ol { list-style-type: decimal; }
+        #result ul, #result ol { 
+            padding-left: 20px; 
+            margin-bottom: 1.2rem;
+            list-style-type: none;
+        }
+        #result li {
+            margin-bottom: 10px;
+            padding-left: 10px;
+            position: relative;
+        }
+        #result ul li::before {
+            content: '➡️'; /* 使用箭頭符號作為重點提示 */
+            position: absolute;
+            left: -15px;
+            font-size: 14px;
+            color: #3b82f6;
+        }
         
         /* 確保圖片不破版 */
         #result img { max-width: 100%; height: auto; margin: 0; display: inline; border-radius: 0; box-shadow: none; }
@@ -87,8 +101,8 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V39.0 最終版)</h1>
-            <p class="text-slate-500 text-sm">✨ **已修復邏輯錯誤與報告排版**</p>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V38.0 最終版)</h1>
+            <p class="text-slate-500 text-sm">✨ **已專注於深度文本報告** (移除所有圖表和分數相關 UI)</p>
         </header>
 
         <div class="flex gap-4 flex-wrap no-print">
@@ -209,7 +223,8 @@
                         <p class="text-slate-500">選擇六獸、六親、地支和情境後，點擊「一鍵分析」開始。</p>
                     </div>
                     <div id="result" class="text-[16px] max-w-none pt-4 border-t border-gray-200 mt-4">
-                        </div>
+                        <p class="text-center text-slate-500 p-4">請選擇分析模式、填寫六獸六親地支後，點擊「一鍵分析」以生成報告。</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -341,7 +356,6 @@
 
             let scores = null;
             let tags = null;
-            let jsonText = null;
             let cleanText = text;
 
             // 嘗試找到 JSON 區塊並移除（防止 JSON 程式碼塊干擾報告）
@@ -349,7 +363,7 @@
             if (matchJsonBlock && matchJsonBlock[1]) {
                 cleanText = text.replace(matchJsonBlock[0], '').trim();
                 
-                // 嘗試提取 tags
+                // 嘗試提取 tags，但忽略 scores
                 try {
                     const j = JSON.parse(matchJsonBlock[1].trim());
                     tags = Array.isArray(j.tags) ? j.tags : null;
@@ -375,35 +389,17 @@
             // V35.0: 移除所有分數相關的 HTML 輸出
             let webScoresHTML = '<p class="text-slate-500">此模式專注於文本分析。</p>';
             
-            // V38.0: 修正品牌標題邏輯
-            let mainTitle = '';
-            if (tags && Array.isArray(tags) && tags.length > 0) {
+            if (Array.isArray(tags) && tags.length > 0) {
                  webScoresHTML = `<div style="margin-top: 15px;"><h4 style="margin-bottom: 5px;">關鍵標籤 (AI 建議)</h4><div class="tags">${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div></div>`;
             }
-
-            if (payload.mode === 'dual' && payload.context === '性愛') {
-                 mainTitle = `仙人指路：神獸七十二型人格在性愛中的應用`;
-            } else if (payload.mode === 'dual') {
-                 mainTitle = `仙人指路：神獸七十二型人格 - 雙人職場協作報告`;
-            } else if (payload.mode === 'personality') {
-                 mainTitle = `仙人指路：神獸七十二型人格 - 個性深度分析`;
-            } else {
-                 mainTitle = `仙人指路：神獸七十二型人格 - ${payload.context} 策略報告`;
-            }
-            
-            // 將報告主標題 HTML 插入最頂端
-            const reportHeaderHTML = `<h2 id="reportTitle" class="text-xl font-extrabold text-gray-800 mb-4 pb-2 border-b-2 border-indigo-200">${mainTitle}</h2>`;
-            html = reportHeaderHTML + html;
 
 
             return { html: html, scores: null, tags: null, webScoresHTML: webScoresHTML };
         }
 
-        // V36.1 移除所有圖表相關函數
+        // 移除所有圖表相關函數
         function renderChart(scores, type){
              // 函數內容為空，不再執行任何繪圖操作
-             const wrap = $('#chartContainer');
-             wrap.innerHTML = '<div id="chartPlaceholder" class="text-center text-slate-500 p-4">圖表功能已停用，專注於文本分析。</div>';
         }
         
         // --- 核心事件監聽和初始化 ---
@@ -492,7 +488,7 @@
                 const aComplete = payload.aBeast && payload.aKin && payload.aBranch;
                 const bComplete = payload.bBeast && payload.bKin && payload.bBranch;
 
-                // --- V34.0 邏輯修正：檢查六獸、六親不得相同，但地支可以 ---
+                // --- 步驟 1：檢查輸入完整性 ---
                 if (!aComplete) { errorMessage = '請選滿我方「六獸、六親、地支」'; }
                 else if (payload.mode === 'dual' && !bComplete) { errorMessage = '雙人分析請選滿對方「六獸、六親、地支」'; }
                 else if (payload.mode !== 'personality' && !payload.context) { errorMessage = '請輸入或選擇情境'; }
@@ -533,7 +529,7 @@
                 }
                 
                 // V35.1: 提醒 AI 只需要文本，不需要 JSON
-                promptText += `\n請輸出專業、深入、長度超過 800 字的繁體中文分析報告，嚴格使用 Markdown 格式分段落、標題與清單。報告必須以「仙人指路」為報告主旨。請勿在報告中包含任何 JSON 程式碼塊。`;
+                promptText += `\n請輸出專業、深入、長度超過 800 字的繁體中文分析報告，嚴格使用 Markdown 格式分段落、標題與清單。請勿在報告中包含任何 JSON 程式碼塊。`;
 
 
                 try {
@@ -583,7 +579,7 @@
                         return;
                     }
 
-                    // --- 渲染 HTML 內容 (V38.0 報告排版) ---
+                    // --- 渲染 HTML 內容 (此時只剩下文本) ---
                     const { html, webScoresHTML } = formatOutput(aiContent);
 
                     $('#result').innerHTML = html;
