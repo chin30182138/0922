@@ -1,17 +1,18 @@
-// api/analyze.js - V29.0 最終穩定版 (修復 Gemini API 網址)
+// api/analyze.js - V31.0 最終穩定版 (使用 OpenAI API Key)
 
-// 獲取 Vercel 環境變數中設置的 Gemini API Key (兼容舊的 OPENAI_API_KEY 名稱)
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
-// ⭐ V29.0 核心修正：使用最新的穩定且通用 API 網址
-const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
+// V31.0 核心：優先使用 OPENAI_API_KEY
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY; 
+const OPENAI_API_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
+
+const FINAL_MODEL = 'gpt-3.5-turbo'; // 鎖定速度最快，解決超時問題
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
-        return res.status(405).end('Method Not Allowed');
+        return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    if (!GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'Server configuration error: GEMINI_API_KEY is missing.' });
+    if (!OPENAI_API_KEY) {
+        return res.status(500).json({ error: 'Server configuration error: OPENAI_API_KEY is missing.' });
     }
 
     try {
@@ -21,60 +22,46 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Missing required parameter: prompt.' });
         }
         
-        // V29.0 核心修正：確保 body 結構符合 Gemini 要求
-        const requestBody = {
-            model: 'gemini-2.5-pro', 
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 3000,
-                responseMimeType: "application/json" 
-            }
-        };
-
-        // 使用 Vercel/Node.js 的原生 fetch 呼叫 Gemini API
-        const response = await fetch(GEMINI_API_ENDPOINT, {
+        // 呼叫 OpenAI API
+        const response = await fetch(OPENAI_API_ENDPOINT, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Goog-Api-Key': GEMINI_API_KEY 
+                'Authorization': `Bearer ${OPENAI_API_KEY}` 
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                model: FINAL_MODEL,
+                messages: [
+                    {
+                        role: "system",
+                        content: "你是一位精通易學、心理學和企業管理的專業顧問，專門提供仙人指路神獸七十二型人格的分析報告。你必須使用繁體中文和 Markdown 格式輸出專業報告，並在結尾嚴格遵守使用者提供的 JSON 結構來輸出六維度分數和標籤。",
+                    },
+                    {
+                        role: "user",
+                        content: prompt,
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 3000, 
+            })
         });
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             const status = response.status;
             
-            console.error("Gemini API Error:", errorData.error ? errorData.error.message : response.statusText);
-
-            // 處理 404 錯誤 (可能是 API Key 權限不足或 URL 仍然失效)
-            let detail = errorData.error ? errorData.error.message : response.statusText;
-            if (status === 404) {
-                 detail = "API 網址 (Endpoint) 無效或已被移除。請檢查 API Key 權限。";
-            }
+            console.error("OpenAI API Error:", errorData.error ? errorData.error.message : response.statusText);
 
             return res.status(status).json({
-                error: `Gemini API 請求失敗 (HTTP ${status})`,
-                detail: detail
+                error: `OpenAI API 請求失敗 (HTTP ${status})`,
+                detail: errorData.error ? errorData.error.message : response.statusText
             });
         }
 
         const data = await response.json();
-
-        // 成功響應：將 Gemini 的純文本輸出包裝成前端兼容格式
-        const geminiContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!geminiContent) {
-             return res.status(500).json({ error: 'AI 輸出內容錯誤', detail: 'Gemini 未返回預期內容。' });
-        }
         
         // 返回給前端 index.html 期望的格式
-        const finalResponse = {
-            choices: [{ message: { content: geminiContent } }]
-        };
-
-        res.status(200).json(finalResponse);
+        res.status(200).json(data);
 
     } catch (error) {
         console.error("Serverless Function Internal Error:", error);
