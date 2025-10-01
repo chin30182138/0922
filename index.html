@@ -3,13 +3,12 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V29.0 最終圖表修復)</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V35.0 純內容版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
     <style>
-        /* --- 介面核心樣式 (V7.9 樣式) --- */
+        /* --- 介面核心樣式 --- */
         body { 
             transition: background-color 0.5s ease, background-image 0.5s ease; 
             background-size: cover; 
@@ -23,17 +22,9 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
-        /* --- 分數條與標籤樣式 (確保分數條顯示) --- */
-        .scores { display:grid; gap:8px; margin-top:20px; padding-top:15px; border-top:1px solid #e5e7eb; }
-        .score { display:flex; align-items:center; gap:10px; font-size:14px }
-        .bar { flex:1; height:12px; background:#e5e7eb; border-radius:9999px; overflow:hidden }
-        .bar > i { display:block; height:100%; transition: width 0.8s ease-out; }
-        .tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:15px; border-top:1px solid #e5e7eb; }
-        .tag { background:#eef2ff; color:#3730a3; padding:4px 10px; border-radius:9999px; font-size:12px; font-weight: 500; }
-        
-        /* --- AI 輸出樣式 (確保報告格式化) --- */
+        /* --- 報告文本樣式 (專業排版) --- */
         #result h3 { font-size: 1.3rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 3px solid #6366f1; padding-bottom: 5px; color: #4338ca; }
-        #result h4 { font-size: 1.15rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.4rem; }
+        #result h4 { font-size: 1.15rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.4rem; color: #4b5563; }
         #result p { margin-bottom: 1rem; line-height: 1.6; }
         #result ul, #result ol { padding-left: 25px; margin-bottom: 1rem; }
         #result ul { list-style-type: disc; }
@@ -42,7 +33,7 @@
         /* 確保圖片不破版 */
         #result img { max-width: 100%; height: auto; margin: 0; display: inline; border-radius: 0; box-shadow: none; }
         
-        /* --- 列印和圖表樣式 (確保圖表顯示) --- */
+        /* 列印時，隱藏控制項 */
         @media print {
             .no-print { display: none !important; }
             * {
@@ -51,41 +42,8 @@
             }
             @page { margin: 15mm; }
         }
+
         .print-header { display: none; }
-
-        .chart-type-selector {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .chart-type-selector button {
-            padding: 4px 10px;
-            font-size: 12px;
-            border: 1px solid #ccc;
-            background: #fff;
-            margin: 0 2px;
-            border-radius: 4px;
-        }
-        .chart-type-selector button.active {
-            background: #6366f1;
-            color: white;
-            border-color: #6366f1;
-        }
-        
-        /* 單獨用於單人模式的標籤，讓它能隱藏 */
-        #modeSingle, #modeDual, #modePersonality {
-            transition: all 0.3s ease;
-        }
-
-        .error-message {
-            color: #ef4444; 
-            background-color: #fef2f2; 
-            border: 1px solid #fca5a5; 
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -96,8 +54,8 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V29.0 最終圖表修復)</h1>
-            <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜**已修復 API 連線與 JSON 解析問題**</p>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V27.0 最終穩定版)</h1>
+            <p class="text-slate-500 text-sm">✨ **已專注於深度文本報告** (移除圖表/分數欄位)</p>
         </header>
 
         <div class="flex gap-4 flex-wrap no-print">
@@ -211,26 +169,16 @@
 
 
         <section class="result-section p-5 rounded-xl shadow space-y-4">
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="md:col-span-1">
-                    <div class="chart-type-selector no-print" style="display: none;">
-                        <button id="chartRadarBtn" data-type="radar" class="active">雷達圖</button>
-                        <button id="chartBarBtn" data-type="bar">長條圖</button>
-                    </div>
-                    <div id="chartContainer" class="flex justify-center items-center" style="min-height: 280px;">
-                        <div id="chartPlaceholder" class="text-center text-slate-500 p-4">圖表只在**雙人分析**模式中，根據 AI 提供的 **JSON** 分數繪製。</div>
-                    </div>
-                </div>
+            <div class="grid md:grid-cols-1 gap-6">
                 
-                <div id="scoresTagsWeb" class="md:col-span-2">
+                <div class="md:col-span-1">
                     <div id="webScoresAndTags">
                         <p class="text-slate-500">選擇六獸、六親、地支和情境後，點擊「一鍵分析」開始。</p>
                     </div>
+                    <div id="result" class="text-[15px] max-w-none pt-4 border-t border-gray-200 mt-4">
+                        </div>
                 </div>
             </div>
-            
-            <div id="result" class="text-[15px] max-w-none">
-                </div>
         </section>
     </div>
 
@@ -239,11 +187,13 @@
         const $$ = s => document.querySelectorAll(s);
         let analysisMode = 'personality'; 
         const markdownConverter = new showdown.Converter(); 
-        let radarChart = null; 
-        let currentScores = null; 
-        let currentChartType = 'radar'; 
         
-        // 情境預設 (恢復到V7.9)
+        // V35.0 移除圖表變數和相關依賴
+        let currentScores = null; 
+        const API_PROXY_ENDPOINT = '/api/analyze'; 
+
+
+        // 情境預設
         const PRESETS = {
             'personality': ['基礎個性', '職涯優勢', '情緒管理', '人際關係'],
             'single': ['年度目標協調', '績效回饋會議', '跨部門協作', '壓期交付專案', '人際關係協調'],
@@ -253,10 +203,9 @@
             ]
         };
         const SEX_CONTEXTS = ['性愛'];
-        const API_PROXY_ENDPOINT = '/api/analyze'; 
 
 
-        // --- 進度條控制函式 (保持 V7.9 的邏輯) ---
+        // --- 進度條控制函式 ---
         let progressInterval = null;
         function startProgressBar() {
             if (progressInterval) clearInterval(progressInterval);
@@ -288,7 +237,7 @@
         }
         // --- 進度條控制函式結束 ---
 
-        // --- 模式切換邏輯 (恢復圖表/分數區塊隱藏邏輯) ---
+        // --- 模式切換邏輯 ---
         function setAnalysisMode(mode){
             analysisMode = mode;
             const modes = {
@@ -297,11 +246,6 @@
                 'dual': $('#modeDual')
             };
             const sectionB = $('#sectionB');
-            const scoresTagsWeb = $('#scoresTagsWeb');
-            const chartTypeSelector = $('.chart-type-selector');
-            const chartContainer = $('#chartContainer');
-            const chartPlaceholder = $('#chartPlaceholder');
-
 
             Object.keys(modes).forEach(key => {
                 if (key === mode) {
@@ -314,20 +258,6 @@
             });
 
             sectionB.style.display = (mode === 'dual') ? 'block' : 'none';
-            
-            // 恢復圖表/分數/標籤區塊的顯示邏輯
-            if (mode === 'dual') {
-                chartContainer.style.display = 'flex';
-                chartPlaceholder.style.display = 'block'; 
-                chartTypeSelector.style.display = 'flex';
-            } else {
-                // 非雙人模式，不顯示圖表切換和預留的圖表位置
-                if(radarChart) radarChart.destroy();
-                chartContainer.style.display = 'flex';
-                chartPlaceholder.style.display = 'block'; 
-                chartPlaceholder.textContent = '此模式不提供六維度圖表。';
-                chartTypeSelector.style.display = 'none';
-            }
             
             loadPresets(mode);
             toggleSexOptions(); 
@@ -374,7 +304,7 @@
             };
         }
         
-        // --- V10.3 健壯 JSON 解析函式 (已確認穩定) ---
+        // --- V27.0 健壯 JSON 解析函式 (已修復圖表問題，但這裡只保留文本解析) ---
         function formatOutput(text) {
             if (!text) return { html: '<p class="text-slate-500">無分析結果。</p>', scores: null, tags: [] };
 
@@ -399,7 +329,7 @@
                 }
             }
             
-            // 解析 JSON 數據
+            // 解析 JSON 數據 (保留，用於確認 AI 輸出的分數，但界面不顯示)
             if (jsonText) {
                 try {
                     let cleanJson = jsonText.replace(/\/\/.*|\/\*[\s\S]*?\*\/|,\s*\}/g, '').trim(); 
@@ -407,17 +337,9 @@
                     scores = j.scores || {};
                     tags = Array.isArray(j.tags) ? j.tags : Object.values(j.tags || {}).flat().filter(t => typeof t === 'string' && t.trim() !== '');
 
-                    if (Object.keys(scores).length === 0) {
-                         const potentialScores = {};
-                         ['fit', 'comm', 'pace', 'account', 'trust', 'innov'].forEach(key => {
-                             if(j[key] !== undefined) potentialScores[key] = j[key];
-                         });
-                         if(Object.keys(potentialScores).length > 0) scores = potentialScores;
-                    }
-                    
                 } catch (e) {
-                    console.error("JSON 解析失敗 (請檢查 AI 輸出格式是否包含有效 JSON):", e);
-                    scores = { error: true, message: e.message }; 
+                    // 如果解析失敗，我們會在控制台記錄，但不在界面上報錯，只顯示文本
+                    console.error("JSON 解析失敗 (已切換為純文本模式):", e);
                 }
             }
 
@@ -428,113 +350,29 @@
                      .replace(/<h[1-6]>[\s]*JSON[\s]*輸出[\s]*<\/h[1-6]>/gi, '')
                      .replace(/<p>\s*<\/p>/gi, '');
 
-            let scoresHTML = '';
-            if (scores && Object.keys(scores).length === 6 && !scores.error) {
-                const clamp = v => Math.max(0, Math.min(100, Number(v) || 0));
-                const row = (l, k, c) => `<div class="score"><b>${l}</b><div class="bar"><i style="width:${clamp(scores[k])}%;background:${c}"></i></div><em>${clamp(scores[k])}</em></div>`;
+            // V35.0: 移除所有分數條 HTML 結構，只返回文本
+            let scoresHTML = ''; 
 
-                scoresHTML = `
-                    <h3 style="border-bottom:none; margin-top:0;">六維度分數</h3>
-                    <div class="scores">
-                        ${row('契合 fit', 'fit', '#22c55e')}
-                        ${row('溝通 comm', 'comm', '#06b6d4')}
-                        ${row('節奏 pace', 'pace', '#f59e0b')}
-                        ${row('權責 account', 'account', '#8b5cf6')}
-                        ${row('信任 trust', 'trust', '#ef4444')}
-                        ${row('創新 innov', 'innov', '#6366f1')}
-                    </div>`;
-
-                if (Array.isArray(tags) && tags.length > 0) scoresHTML += `<div class="tags">${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>`;
-            } else if (analysisMode === 'dual' && scores && (scores.error || Object.keys(scores).length < 6)) {
-                scoresHTML = `<div class="error-message">⚠️ **雙人模式分析完成，但未成功解析到六維度分數 (JSON 格式可能有誤)**<br>請檢查您的 Vercel Log 或 AI 輸出是否符合 JSON 結構。</div>`;
-            } else {
-                 scoresHTML = `<p class="text-slate-500">此模式不提供六維度分數。</p>`;
+            // 修正：如果解析成功，將關鍵詞作為文本顯示
+            if (Array.isArray(tags) && tags.length > 0) {
+                 scoresHTML += `<div style="margin-top: 15px;"><h4 style="margin-bottom: 5px;">關鍵標籤 (AI 建議)</h4><div class="tags">${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div></div>`;
             }
 
 
             return { html: html, scores, tags, webScoresHTML: scoresHTML };
         }
 
-        // --- 圖表繪製核心函式 (保持不變) ---
+        // --- 圖表繪製核心函式 (移除所有圖表繪製邏輯) ---
         function renderChart(scores, type){
             const wrap = $('#chartContainer');
             const chartTypeSelector = $('.chart-type-selector');
             
-            if(radarChart) {
-                radarChart.destroy();
-                radarChart = null;
-            }
-            wrap.innerHTML = '<div id="chartPlaceholder" class="text-center text-slate-500 p-4"></div>'; 
+            // 確保圖表區塊是乾淨的
+            wrap.innerHTML = ''; 
+            chartTypeSelector.style.display = 'none';
 
-            const isDual = analysisMode === 'dual';
-            const hasValidScores = scores && Object.keys(scores).length === 6 && !scores.error;
-
-            if(!isDual || !hasValidScores) {
-                 const msg = isDual && scores && scores.error 
-                     ? '⚠️ JSON 解析失敗，無法繪製圖表。'
-                     : '圖表只在**雙人分析**模式中，根據 AI 提供的 **JSON** 分數繪製。';
-                 
-                 wrap.innerHTML = `<div id="chartPlaceholder" class="text-center text-slate-500 p-4">${msg}</div>`;
-                 chartTypeSelector.style.display = 'none';
-                 return;
-            }
-            
-            wrap.innerHTML = '';
-            chartTypeSelector.style.display = 'flex';
-
-            currentScores = scores; 
-            currentChartType = type; 
-
-            const labels=['契合 fit','溝通 comm','節奏 pace','權責 account','信任 trust','創新 innov'];
-            const data=[scores.fit,scores.comm,scores.pace,scores.account,scores.trust,scores.innov];
-            const colors=['#22c55e','#06b6d4','#f59e0b','#8b5cf6','#ef4444','#6366f1'];
-            
-            const canvas=document.createElement('canvas'); 
-            canvas.id = 'chartCanvas'; 
-            wrap.appendChild(canvas);
-            
-            try {
-                const config = {
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: '六維度分析',
-                            data: data,
-                            backgroundColor: type === 'bar' ? colors : 'rgba(99,102,241,0.2)', 
-                            borderColor: type === 'bar' ? colors : 'rgba(99,102,241,1)',
-                            borderWidth: type === 'bar' ? 1 : 2,
-                            fill: type === 'radar',
-                            pointBackgroundColor:'rgba(99,102,241,1)',
-                            pointBorderColor:'#fff',
-                            pointHoverBackgroundColor:'#fff',
-                            pointHoverBorderColor:'rgba(99,102,241,1)'
-                        }]
-                    },
-                    options: {
-                        responsive:true, 
-                        maintainAspectRatio: true, 
-                        plugins:{ legend:{ display:false } },
-                        scales: type === 'radar' ? { 
-                            r:{
-                                angleLines:{ display:true }, grid:{ color:'rgba(0, 0, 0, 0.1)' },
-                                pointLabels:{ font:{ size: 12 } }, suggestedMin:0, suggestedMax:100, ticks:{ stepSize:20 } 
-                            }
-                        } : { 
-                            y: { suggestedMin: 0, suggestedMax: 100, ticks: { stepSize: 20 } },
-                            x: { grid: { display: false } }
-                        }
-                    }
-                };
-                
-                radarChart = new Chart(canvas.getContext('2d'), {
-                    type: type,
-                    ...config
-                });
-
-            } catch (e) {
-                console.error("Chart.js 繪製失敗:", e);
-                wrap.innerHTML = '<p class="text-red-500 text-sm p-4">圖表繪製失敗。請檢查 F12 控制台錯誤。</p>';
-            }
+            // V35.0: 不再繪製 Canvas 圖表，只顯示提示
+            wrap.innerHTML = `<div id="chartPlaceholder" class="text-center text-slate-500 p-4">圖表功能已停用，專注於文本分析。</div>`; 
         }
         
         // --- 核心事件監聽和初始化 ---
@@ -569,16 +407,7 @@
                 $('#sexDetailInput').value = existingDetails.join('；');
             });
 
-            // 圖表類型切換 (已修復圖表渲染)
-            $$('.chart-type-selector button').forEach(btn => {
-                btn.onclick = () => {
-                    if (!currentScores) return; 
-                    const newType = btn.dataset.type;
-                    $$('.chart-type-selector button').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    renderChart(currentScores, newType);
-                };
-            });
+            // 圖表類型切換 (已移除)
             
             // 列印
             $('#print').onclick = () => window.print();
@@ -647,7 +476,7 @@
 
                 // --- 準備並顯示狀態 ---
                 $('#result').innerHTML = '<p class="text-slate-500">正在等待 AI 分析...</p>';
-                renderChart(null, currentChartType);
+                // renderChart(null, currentChartType); // 移除圖表重置
                 $('#webScoresAndTags').innerHTML = '';
                 startProgressBar();
 
@@ -724,8 +553,8 @@
                     $('#result').innerHTML = html;
                     $('#webScoresAndTags').innerHTML = webScoresHTML;
 
-                    // 繪製圖表
-                    renderChart(scores, currentChartType);
+                    // 繪製圖表 (即使是純文本模式，也保留圖表繪製的呼叫，但不會真的繪圖)
+                    // renderChart(scores, currentChartType); // 移除圖表繪製，專注文本
                     
                     stopProgressBar(true); // 成功完成
 
