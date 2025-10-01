@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V12.3 最終穩定版)</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V24.0 最終修復)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
     <style>
-        /* 確保 body 背景切換平滑 */
+        /* 保持 V7.9 樣式 */
         body { 
             transition: background-color 0.5s ease, background-image 0.5s ease; 
             background-size: cover; 
@@ -49,7 +49,7 @@
             box-shadow: none;
         }
         
-        /* 列印時，隱藏控制項，並強制顯示顏色 */
+        /* 列印和圖表樣式 (確保圖表顯示) */
         @media print {
             .no-print { display: none !important; }
             * {
@@ -60,7 +60,6 @@
         }
         .print-header { display: none; }
 
-        /* 圖表選擇器樣式 */
         .chart-type-selector {
             display: flex;
             justify-content: center;
@@ -261,6 +260,7 @@
             ]
         };
         const SEX_CONTEXTS = ['性愛'];
+        const API_PROXY_ENDPOINT = '/api/analyze'; 
 
 
         // --- 進度條控制函式 ---
@@ -381,7 +381,7 @@
             };
         }
         
-        // --- V10.3 健壯 JSON 解析函式 (已確認穩定) ---
+        // --- V12.5 強化 JSON 解析函式 (已確認穩定) ---
         function formatOutput(text) {
             if (!text) return { html: '<p class="text-slate-500">無分析結果。</p>', scores: null, tags: [] };
 
@@ -399,10 +399,12 @@
 
             // 2. 如果沒有找到 ```json，則嘗試尋找第一個完整的大括號 {} 區塊
             if (!jsonText) {
+                // V12.5 修正了這個錯誤：將變數名稱修正
                 const matchAnyCurly = text.match(/\{[\s\S]*\}/);
                 if (matchAnyCurly) {
                     jsonText = matchAnyCurly[0].trim();
-                    cleanText = text.replace(jsonAnyCurly[0], '').trim(); 
+                    // V12.5 修正：確保只移除 JSON 區塊
+                    cleanText = text.replace(matchAnyCurly[0], '').trim(); 
                 }
             }
             
@@ -634,14 +636,14 @@
             };
             updateBackground(); 
 
-            // V12.6 核心邏輯：API 呼叫優化 (與 V12.5 相同)
+            // V12.6 核心邏輯：API 呼叫優化
             $('#go').onclick = async () => {
                 const payload = getPayload();
                 let errorMessage = '';
                 const aComplete = payload.aBeast && payload.aKin && payload.aBranch;
                 const bComplete = payload.bBeast && payload.bKin && payload.bBranch;
 
-                // --- 前端基本驗證 (與 V12.5 相同) ---
+                // --- 前端基本驗證 ---
                 if (!aComplete) { errorMessage = '請選滿我方「六獸、六親、地支」'; }
                 else if (payload.mode === 'dual' && !bComplete) { errorMessage = '雙人分析請選滿對方「六獸、六親、地支」'; }
                 else if (payload.mode !== 'personality' && !payload.context) { errorMessage = '請輸入或選擇情境'; }
@@ -656,7 +658,7 @@
                 startProgressBar();
 
 
-                // --- 構建發送給 Vercel 的 Promt 文本 (與 V12.5 相同) ---
+                // --- 構建發送給 Vercel 的 Promt 文本 ---
                 const combinedA = `${payload.aBeast}-${payload.aKin}-${payload.aBranch}`;
                 const combinedB = `${payload.bBeast}-${payload.bKin}-${payload.bBranch}`;
                 
@@ -673,10 +675,6 @@
                 if (payload.context === '性愛' && payload.mode === 'dual' && payload.sexDetail) {
                     promptText += `性愛劇本細節要求: ${payload.sexDetail}\n`;
                 }
-                
-                // V12.6: 將模型資訊硬寫入 prompt，以便後端知道使用哪個模型（Gemini Pro）
-                promptText += `\n--- [MODEL: gemini-2.5-pro] ---`;
-
 
                 try {
                     const response = await fetch('/api/analyze', {
@@ -685,7 +683,7 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            prompt: promptText // 發送給後端 Function
+                            prompt: promptText 
                         })
                     });
 
@@ -716,6 +714,7 @@
                          return;
                     }
                     
+                    // 從 Gemini/OpenAI 響應中獲取內容
                     const aiContent = data.candidates?.[0]?.content?.parts?.[0]?.text || data.choices?.[0]?.message?.content;
                     
                     if (!aiContent) {
