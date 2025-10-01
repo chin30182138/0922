@@ -1,18 +1,16 @@
-// api/analyze.js - V25.0 最終穩定版 (修復 fetch URL 解析問題，確保 Gemini Pro 運行)
+// api/analyze.js - V28.0 最終穩定版 (零外部依賴，純 fetch 呼叫 Gemini Pro)
 
-// 確保 Vercel 環境變數中 OPENAI_API_KEY 已設定
+// Vercel 專案可以直接讀取環境變數。我們兼容您的 OPENAI_API_KEY 名稱。
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
-const GEMINI_API_ENDPOINT = 'https://generative-ai.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent'; // 使用更標準的 API 網域
+const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
 
-// Vercel Serverless Function 專用程式碼
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
-        res.setHeader('Allow', 'POST');
         return res.status(405).end('Method Not Allowed');
     }
 
     if (!GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'Server configuration error: GEMINI_API_KEY is not set.' });
+        return res.status(500).json({ error: 'Server configuration error: GEMINI_API_KEY is missing.' });
     }
 
     try {
@@ -22,7 +20,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Missing required parameter: prompt.' });
         }
         
-        // V25.0 核心修正：將參數全部包裹，使用更穩定的 API 網址
+        // V28.0 核心修正：手動構造 JSON 體，不依賴任何外部庫
         const requestBody = {
             model: 'gemini-2.5-pro', 
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -33,12 +31,12 @@ export default async function handler(req, res) {
             }
         };
 
-        // 呼叫 Gemini API (使用更穩定的 URL 和 Key 傳遞方式)
+        // 使用 Vercel/Node.js 的原生 fetch 呼叫 Gemini API
         const response = await fetch(GEMINI_API_ENDPOINT, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Goog-Api-Key': GEMINI_API_KEY // Gemini API 使用 'X-Goog-Api-Key'
+                'X-Goog-Api-Key': GEMINI_API_KEY 
             },
             body: JSON.stringify(requestBody)
         });
@@ -64,7 +62,7 @@ export default async function handler(req, res) {
              return res.status(500).json({ error: 'AI 輸出內容錯誤', detail: 'Gemini 未返回預期內容。' });
         }
         
-        // 返回給前端 index.html 期望的格式
+        // 返回給前端 index.html 期望的格式 (choices 陣列)
         const finalResponse = {
             choices: [{ message: { content: geminiContent } }]
         };
