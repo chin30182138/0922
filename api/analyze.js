@@ -1,79 +1,82 @@
-// api/analyze.js - V29.1 最終修復版 (確保 Gemini Pro API 請求結構正確)
+// api/analyze.js - V29.2 最終穩定版 (使用 OpenAI 官方 SDK)
 
-// 獲取 Vercel 環境變數中設置的 Gemini API Key (兼容舊的 OPENAI_API_KEY 名稱)
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
-const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
+// 導入 OpenAI SDK (依賴 package.json 安裝)
+const OpenAI = require('openai'); 
+
+// 確保 Vercel 環境變數中 OPENAI_API_KEY 已設定
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY; // 優先使用 OpenAI Key
+const FINAL_MODEL = 'gpt-3.5-turbo'; // 鎖定速度最快，避免 Vercel 超時
+
+const openai = new OpenAI({
+    apiKey: OPENAI_API_KEY, 
+});
+
+// JSON 結構提示 (V13.5 最終嚴格版)
+const JSON_STRUCTURE_PROMPT = `
+**請絕對、嚴格、立即遵守以下格式規範：**
+
+1.  報告主體必須是專業、深入的繁體中文 Markdown 格式。
+2.  **在報告結束後，你必須立即輸出一個獨立的 '```json' 程式碼區塊。**
+3.  **此 '```json' 區塊的前後，絕對禁止出現任何多餘的解釋文字或標題。**
+4.  JSON 區塊必須嚴格包含以下結構：
+
+{
+  "scores": {
+    "fit": [0-100的整數，代表契合度分數],
+    "comm": [0-100的整數，代表溝通度分數],
+    "pace": [0-100的整數，代表節奏度分數],
+    "account": [0-100的整數，代表權責度分數],
+    "trust": [0-100的整數，代表信任度分數],
+    "innov": [0-100的整數，代表創新度分數]
+  },
+  "tags": [
+    "性格或情境的關鍵詞1",
+    "性格或情境的關鍵詞2",
+    "性格或情境的關鍵詞3"
+  ]
+}
+`;
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
-        return res.status(405).end('Method Not Allowed');
+        return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    if (!GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'Server configuration error: GEMINI_API_KEY is missing.' });
+    const { prompt } = req.body;
+
+    if (!prompt) {
+        return res.status(400).json({ error: 'Missing required parameter: prompt.' });
     }
 
     try {
-        const { prompt } = req.body;
-
-        if (!prompt) {
-            return res.status(400).json({ error: 'Missing required parameter: prompt.' });
-        }
+        const fullPrompt = prompt + JSON_STRUCTURE_PROMPT;
         
-        // ⭐ V29.1 核心修正：使用正確的 structure，將所有配置放入 generationConfig
-        const requestBody = {
-            model: 'gemini-2.5-pro',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            
-            // 這是 Gemini 的正確結構：所有參數都平鋪，或包裹在 generationConfig 中
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 3000,
-                // 強制 JSON 輸出 (這是 Vercel Function 應該傳遞的)
-                responseMimeType: "application/json" 
-            }
-        };
-
-        // 呼叫 Gemini API
-        const response = await fetch(GEMINI_API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Goog-Api-Key': GEMINI_API_KEY
-            },
-            body: JSON.stringify(requestBody)
+        // 呼叫 OpenAI API
+        const completion = await openai.chat.completions.create({
+            model: FINAL_MODEL,
+            messages: [
+                {
+                    role: "system",
+                    content: "你是一位精通易學、心理學和企業管理的專業顧問，專門提供仙人指路神獸七十二型人格的分析報告。你必須使用繁體中文和 Markdown 格式輸出專業報告，並在結尾嚴格遵守使用者提供的 JSON 結構來輸出六維度分數和標籤。",
+                },
+                {
+                    role: "user",
+                    content: fullPrompt,
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 3000,
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            const status = response.status;
-            
-            console.error("Gemini API Error:", errorData.error ? errorData.error.message : response.statusText);
-
-            return res.status(status).json({
-                error: `Gemini API 請求失敗 (HTTP ${status})`,
-                detail: errorData.error ? errorData.error.message : response.statusText
-            });
-        }
-
-        const data = await response.json();
-
-        // 成功響應：將 Gemini 的純文本輸出包裝成前端兼容格式
-        const geminiContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!geminiContent) {
-             return res.status(500).json({ error: 'AI 輸出內容錯誤', detail: 'Gemini 未返回預期內容。' });
-        }
-        
-        // 返回給前端 index.html 期望的格式
-        const finalResponse = {
-            choices: [{ message: { content: geminiContent } }]
-        };
-
-        res.status(200).json(finalResponse);
+        res.status(200).json(completion);
 
     } catch (error) {
-        console.error("Serverless Function Internal Error:", error);
-        res.status(500).json({ error: 'Internal Server Error', detail: error.message });
+        console.error("OpenAI API Error:", error.message || error);
+        
+        // 處理 API 請求失敗
+        res.status(500).json({ 
+            error: '分析服務器錯誤', 
+            detail: error.message || '無法連線到 AI 服務。' 
+        });
     }
 }
