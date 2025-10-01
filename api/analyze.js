@@ -1,7 +1,8 @@
-// api/analyze.js - V28.0 最終穩定版 (零外部依賴，純 fetch 呼叫 Gemini Pro)
+// api/analyze.js - V29.0 最終穩定版 (修復 Gemini API 網址)
 
-// Vercel 專案可以直接讀取環境變數。我們兼容您的 OPENAI_API_KEY 名稱。
+// 獲取 Vercel 環境變數中設置的 Gemini API Key (兼容舊的 OPENAI_API_KEY 名稱)
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY; 
+// ⭐ V29.0 核心修正：使用最新的穩定且通用 API 網址
 const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
 
 export default async function handler(req, res) {
@@ -20,7 +21,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Missing required parameter: prompt.' });
         }
         
-        // V28.0 核心修正：手動構造 JSON 體，不依賴任何外部庫
+        // V29.0 核心修正：確保 body 結構符合 Gemini 要求
         const requestBody = {
             model: 'gemini-2.5-pro', 
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -47,9 +48,15 @@ export default async function handler(req, res) {
             
             console.error("Gemini API Error:", errorData.error ? errorData.error.message : response.statusText);
 
+            // 處理 404 錯誤 (可能是 API Key 權限不足或 URL 仍然失效)
+            let detail = errorData.error ? errorData.error.message : response.statusText;
+            if (status === 404) {
+                 detail = "API 網址 (Endpoint) 無效或已被移除。請檢查 API Key 權限。";
+            }
+
             return res.status(status).json({
                 error: `Gemini API 請求失敗 (HTTP ${status})`,
-                detail: errorData.error ? errorData.error.message : response.statusText
+                detail: detail
             });
         }
 
@@ -62,7 +69,7 @@ export default async function handler(req, res) {
              return res.status(500).json({ error: 'AI 輸出內容錯誤', detail: 'Gemini 未返回預期內容。' });
         }
         
-        // 返回給前端 index.html 期望的格式 (choices 陣列)
+        // 返回給前端 index.html 期望的格式
         const finalResponse = {
             choices: [{ message: { content: geminiContent } }]
         };
