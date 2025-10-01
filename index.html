@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V36.0 純內容版)</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V36.1 純文本穩定版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
@@ -21,7 +21,7 @@
             backdrop-filter: blur(5px); 
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        
+
         /* --- 報告文本樣式 (專業排版) --- */
         #result h3 { font-size: 1.3rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 3px solid #6366f1; padding-bottom: 5px; color: #4338ca; }
         #result h4 { font-size: 1.15rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.4rem; color: #4b5563; }
@@ -43,6 +43,16 @@
             @page { margin: 15mm; }
         }
         .print-header { display: none; }
+
+        /* 錯誤提示樣式 */
+        .error-message {
+            color: #ef4444; 
+            background-color: #fef2f2; 
+            border: 1px solid #fca5a5; 
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -53,8 +63,8 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V35.1 純文本版)</h1>
-            <p class="text-slate-500 text-sm">✨ **已專注於深度文本報告** (移除圖表/分數欄位)</p>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V36.1 純文本版)</h1>
+            <p class="text-slate-500 text-sm">✨ **已專注於深度文本報告** (移除所有圖表和分數相關 UI)</p>
         </header>
 
         <div class="flex gap-4 flex-wrap no-print">
@@ -188,7 +198,6 @@
         const markdownConverter = new showdown.Converter(); 
         
         // V35.0 移除所有圖表相關變數
-        let currentScores = null; 
         const API_PROXY_ENDPOINT = '/api/analyze'; 
 
 
@@ -305,7 +314,7 @@
         
         // --- V35.0 簡化：現在只提取文本，不再提取分數 ---
         function formatOutput(text) {
-            if (!text) return { html: '<p class="text-slate-500">無分析結果。</p>', scores: null, tags: [] };
+            if (!text) return { html: '<p class="text-slate-500">無分析結果。</p>', scores: null, tags: null, webScoresHTML: '<p class="text-slate-500">無法獲取分析內容。</p>' };
 
             let cleanText = text;
 
@@ -329,10 +338,15 @@
                      .replace(/<h[1-6]>[\s]*JSON[\s]*輸出[\s]*<\/h[1-6]>/gi, '')
                      .replace(/<p>\s*<\/p>/gi, '');
 
-            // V35.0: 移除所有分數相關的 HTML 輸出
+            // V35.0: 移除所有分數相關的 HTML 結構，只顯示文本
             return { html: html, scores: null, tags: null, webScoresHTML: '<p class="text-slate-500">此模式專注於文本分析。</p>' };
         }
 
+        // --- V36.1 移除所有圖表相關函數和呼叫 ---
+        function renderChart(scores, type){
+             // 函數內容為空，不再執行任何繪圖操作
+        }
+        
         // --- 核心事件監聽和初始化 ---
         document.addEventListener('DOMContentLoaded', () => {
             // 設定報告時間
@@ -432,7 +446,7 @@
 
                 // --- 準備並顯示狀態 ---
                 $('#result').innerHTML = '<p class="text-slate-500">正在等待 AI 分析...</p>';
-                $('#webScoresAndTags').innerHTML = ''; // 清除分數提示
+                $('#webScoresAndTags').innerHTML = ''; // 清空分數區塊
                 startProgressBar();
 
 
@@ -440,7 +454,6 @@
                 const combinedA = `${payload.aBeast}-${payload.aKin}-${payload.aBranch}`;
                 const combinedB = `${payload.bBeast}-${payload.bKin}-${payload.bBranch}`;
                 
-                // V35.1: 修正 Prompt，移除分數要求，專注文本
                 let promptText = `請根據以下資訊，輸出深度報告：\n`;
                 promptText += `分析模式: ${payload.mode === 'personality' ? '個性分析' : (payload.mode === 'single' ? '單人情境' : '雙人情境')}\n`;
                 promptText += `我方組合 (A): ${combinedA}\n`;
@@ -459,20 +472,27 @@
 
 
                 try {
-                    const response = await fetch(API_PROXY_ENDPOINT, {
+                    const response = await fetch('/api/analyze', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: promptText })
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            prompt: promptText // 發送給後端 Function
+                        })
                     });
 
+                    // 核心修正：只讀取一次響應主體，並處理所有成功或失敗的情況
                     const rawText = await response.text(); 
                     
                     if (!response.ok) {
+                        // 處理 API 錯誤 (Vercel/OpenAI 錯誤)
                         try {
                             const errorData = JSON.parse(rawText);
                             const errorMsg = errorData.detail || errorData.error || '未知 API 錯誤';
                             $('#result').innerHTML = `<h3 class="text-red-600">❌ 分析失敗 (API 錯誤)</h3><p>錯誤訊息：${errorMsg}</p><p class="text-xs text-slate-500">請檢查 Vercel logs 或 GEMINI/OPENAI_API_KEY 是否有效。</p>`;
                         } catch (e) {
+                            // 如果不是 JSON，則返回 Vercel 原始錯誤
                              $('#result').innerHTML = `<h3 class="text-red-600">❌ 網路連接或伺服器錯誤 (Vercel 端)</h3><p>Vercel API 返回非標準響應。這通常是 Vercel 伺服器配置錯誤或超時。</p><p class="text-xs text-slate-500">原始響應開頭：${rawText.substring(0, 200)}...</p>`;
                         }
                         stopProgressBar(false);
@@ -502,7 +522,8 @@
                     const { html, scores, tags, webScoresHTML } = formatOutput(aiContent);
 
                     $('#result').innerHTML = html;
-                    $('#webScoresAndTags').innerHTML = webScoresHTML; // 顯示 "此模式不提供分數" 提示
+                    $('#webScoresAndTags').innerHTML = webScoresHTML;
+
                     
                     stopProgressBar(true); // 成功完成
 
