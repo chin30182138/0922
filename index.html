@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V24.0 最終修復)</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V12.6 最終穩定版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 
     <style>
-        /* 保持 V7.9 樣式 */
+        /* --- 介面核心樣式 (確保 V7.9 介面重現) --- */
         body { 
             transition: background-color 0.5s ease, background-image 0.5s ease; 
             background-size: cover; 
@@ -23,7 +23,7 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
-        /* 分數條與標籤樣式 */
+        /* --- 分數條與標籤樣式 (確保分數條顯示) --- */
         .scores { display:grid; gap:8px; margin-top:20px; padding-top:15px; border-top:1px solid #e5e7eb; }
         .score { display:flex; align-items:center; gap:10px; font-size:14px }
         .bar { flex:1; height:12px; background:#e5e7eb; border-radius:9999px; overflow:hidden }
@@ -31,7 +31,7 @@
         .tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:15px; border-top:1px solid #e5e7eb; }
         .tag { background:#eef2ff; color:#3730a3; padding:4px 10px; border-radius:9999px; font-size:12px; font-weight: 500; }
         
-        /* AI 輸出樣式 (V7 豐富樣式) */
+        /* --- AI 輸出樣式 (確保報告格式化) --- */
         #result h3 { font-size: 1.3rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 3px solid #6366f1; padding-bottom: 5px; color: #4338ca; }
         #result h4 { font-size: 1.15rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.4rem; }
         #result p { margin-bottom: 1rem; line-height: 1.6; }
@@ -49,7 +49,7 @@
             box-shadow: none;
         }
         
-        /* 列印和圖表樣式 (確保圖表顯示) */
+        /* --- 列印和圖表樣式 (確保圖表顯示) --- */
         @media print {
             .no-print { display: none !important; }
             * {
@@ -103,7 +103,7 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V12.3 最終穩定版)</h1>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V12.6 最終穩定版)</h1>
             <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜**已修復 API 連線與 JSON 解析問題**</p>
         </header>
 
@@ -381,7 +381,7 @@
             };
         }
         
-        // --- V12.5 強化 JSON 解析函式 (已確認穩定) ---
+        // --- V10.3 健壯 JSON 解析函式 (已確認穩定) ---
         function formatOutput(text) {
             if (!text) return { html: '<p class="text-slate-500">無分析結果。</p>', scores: null, tags: [] };
 
@@ -399,11 +399,9 @@
 
             // 2. 如果沒有找到 ```json，則嘗試尋找第一個完整的大括號 {} 區塊
             if (!jsonText) {
-                // V12.5 修正了這個錯誤：將變數名稱修正
                 const matchAnyCurly = text.match(/\{[\s\S]*\}/);
                 if (matchAnyCurly) {
                     jsonText = matchAnyCurly[0].trim();
-                    // V12.5 修正：確保只移除 JSON 區塊
                     cleanText = text.replace(matchAnyCurly[0], '').trim(); 
                 }
             }
@@ -636,7 +634,7 @@
             };
             updateBackground(); 
 
-            // V12.6 核心邏輯：API 呼叫優化
+            // V12.6 核心邏輯：正確呼叫 API
             $('#go').onclick = async () => {
                 const payload = getPayload();
                 let errorMessage = '';
@@ -677,13 +675,13 @@
                 }
 
                 try {
-                    const response = await fetch('/api/analyze', {
+                    const response = await fetch(API_PROXY_ENDPOINT, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            prompt: promptText 
+                            prompt: promptText // 發送給後端 Function
                         })
                     });
 
@@ -715,7 +713,7 @@
                     }
                     
                     // 從 Gemini/OpenAI 響應中獲取內容
-                    const aiContent = data.candidates?.[0]?.content?.parts?.[0]?.text || data.choices?.[0]?.message?.content;
+                    const aiContent = data.candidates?.[0]?.content?.parts?.[0]?.text || data.choices[0]?.message?.content;
                     
                     if (!aiContent) {
                         $('#result').innerHTML = '<h3 class="text-red-600">❌ 分析失敗</h3><p>AI 未返回有效的文本內容，請檢查 Vercel logs。</p>';
