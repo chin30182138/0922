@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙人指路神獸七十二型人格 - 分析報告 (V27.0 最終穩定版)</title>
+    <title>仙人指路神獸七十二型人格 - 分析報告 (V34.0 最終穩定版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
@@ -103,8 +103,8 @@
         </header>
 
         <header class="space-y-1 no-print">
-            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V27.0 最終穩定版)</h1>
-            <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜**已修復 API 連線與 JSON 解析問題**</p>
+            <h1 class="text-2xl font-bold">仙人指路｜神獸七十二型人格 (V12.3 最終穩定版)</h1>
+            <p class="text-slate-500 text-sm">支援個性分析、人際分析與性愛劇本｜**已大幅強化圖表數據解析**</p>
         </header>
 
         <div class="flex gap-4 flex-wrap no-print">
@@ -260,10 +260,10 @@
             ]
         };
         const SEX_CONTEXTS = ['性愛'];
-        const API_PROXY_ENDPOINT = '/api/analyze'; 
+        const API_PROXY_ENDPOINT = '/api/analyze';
 
 
-        // --- 進度條控制函式 (保持 V7.9 的邏輯) ---
+        // --- 進度條控制函式 ---
         let progressInterval = null;
         function startProgressBar() {
             if (progressInterval) clearInterval(progressInterval);
